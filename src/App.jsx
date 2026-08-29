@@ -1,23 +1,8 @@
 import { useState } from 'react';
+import { MOVIES } from './movies.js'; // Importing the dynamically generated file
 import MovieGrid from './components/MovieGrid';
 import MovieDetails from './components/MovieDetails';
 import UnlockSheet from './components/UnlockSheet';
-
-// Example catalog - replace with your D1 DB fetch later
-const MOVIES = [
-  {
-    id: 'night-of-the-living-dead',
-    title: 'Night of the Living Dead',
-    year: 1968,
-    runtime: '1h 36m',
-    genre: 'Horror',
-    poster: 'https://upload.wikimedia.org/wikipedia/commons/2/26/Night_of_the_Living_Dead_affiche.jpg',
-    backdrop: 'https://upload.wikimedia.org/wikipedia/commons/2/26/Night_of_the_Living_Dead_affiche.jpg',
-    synopsis: 'A group of strangers barricade themselves inside a rural farmhouse as the recently deceased rise as flesh-eating ghouls.',
-    cast: ['Duane Jones', 'Judith O\u2019Dea', 'Karl Hardman'],
-    videoEmbedUrl: 'https://archive.org/embed/night_of_the_living_dead',
-  }
-];
 
 export default function App() {
   const [selectedMovie, setSelectedMovie] = useState(null);
@@ -32,13 +17,8 @@ export default function App() {
     setUnlockingMovie(selectedMovie);
   };
 
-  // This fires when they click "Continue" on the sheet to load offers.
-  // Note: Actual unlock logic (postback) usually happens via polling or API webhook in the background.
   const handleUnlockContinue = () => {
     console.log("Loading CPA offers for:", unlockingMovie.title);
-    // If you want to bypass the locker for testing, uncomment the next two lines:
-    // markUnlocked(unlockingMovie.id);
-    // setUnlockingMovie(null);
   };
 
   const markUnlocked = (movieId) => {
@@ -75,11 +55,10 @@ export default function App() {
 
       {unlockingMovie && (
         <UnlockSheet
-          // Mapping movie data to the format UnlockSheet expects
           item={{ 
             title: unlockingMovie.title, 
             image: unlockingMovie.poster, 
-            words: 'HD Movie' // Repurposed from 'words'
+            words: 'HD Movie' 
           }}
           onContinue={handleUnlockContinue}
           onClose={closeUnlockSheet}
