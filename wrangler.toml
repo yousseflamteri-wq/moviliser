@@ -7,7 +7,7 @@ compatibility_date = "2026-08-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "promptvault"
-database_id = "PASTE_YOUR_D1_DATABASE_ID_HERE"
+database_id = "cf861abe-fa6a-4ce5-b84f-f6aeec47446e"
 
 # ── Non-secret vars. Secrets (COOKIE_SECRET, POSTBACK_SECRET, HASH_SALT)
 #    go in the Pages dashboard as encrypted vars, or in .dev.vars locally. ──
