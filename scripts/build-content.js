@@ -39,6 +39,7 @@ function parse(file) {
     genre: meta.genre || null,
     cast: (meta.cast || '').split(',').map((c) => c.trim()).filter(Boolean),
     videoEmbedUrl: meta.videoembedurl || meta.video || null,
+    trailerUrl: meta.trailerurl || meta.trailer || null,
     manualImage: meta.image || null,
     manualBackdrop: meta.backdrop || null,
     synopsis,
@@ -87,6 +88,7 @@ for (const file of files) {
     synopsis: item.synopsis || null,
     cast: item.cast,
     videoEmbedUrl: item.videoEmbedUrl,
+    trailerUrl: item.trailerUrl,
   });
   console.log(`  · ${item.title} (${item.slug})`);
 }
