@@ -1,0 +1,17 @@
+name = "promptvault"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-08-01"
+
+# ── D1: sessions, unlocks, postbacks ──
+# Create once, then paste the id it prints:  npx wrangler d1 create promptvault
+[[d1_databases]]
+binding = "DB"
+database_name = "promptvault"
+database_id = "PASTE_YOUR_D1_DATABASE_ID_HERE"
+
+# ── Non-secret vars. Secrets (COOKIE_SECRET, POSTBACK_SECRET, HASH_SALT)
+#    go in the Pages dashboard as encrypted vars, or in .dev.vars locally. ──
+[vars]
+CREDITS_PER_CONVERSION = "1"
+# Leave empty until you've seen a real postback and know its source IPs.
+POSTBACK_IPS = ""
