@@ -34,48 +34,64 @@ export default function MovieDetails({ movie, unlocked, onWatchNow, onClose }) {
         <VideoPlayer movie={movie} />
       ) : (
         <>
-          <div className="relative h-[46vh] w-full sm:h-[56vh]">
+          <div className="relative h-[55vh] w-full sm:h-[65vh]">
             <img src={movie.backdrop || movie.poster} alt="" className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/80 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent sm:via-zinc-950/50" />
           </div>
 
-          <div className="relative mx-auto -mt-24 max-w-4xl px-5 pb-16 sm:-mt-32 sm:px-8">
-            <div className="flex flex-col gap-6 sm:flex-row sm:gap-8">
+          <div className="relative mx-auto -mt-32 max-w-5xl px-5 pb-16 sm:-mt-48 sm:px-8">
+            <div className="flex flex-col gap-6 sm:flex-row sm:gap-10">
               <img
                 src={movie.poster}
                 alt={movie.title}
-                className="h-64 w-44 shrink-0 self-start rounded-xl object-cover shadow-2xl ring-1 ring-white/10 sm:h-80 sm:w-56"
+                className="h-72 w-48 shrink-0 self-start rounded-xl object-cover shadow-2xl ring-1 ring-white/10 sm:h-[400px] sm:w-[270px]"
               />
 
-              <div className="min-w-0 pt-2">
-                <h1 className="text-[28px] font-bold leading-tight text-white sm:text-[36px]">{movie.title}</h1>
+              <div className="min-w-0 flex-1 flex flex-col justify-start">
+                <h1 className="text-[32px] font-bold leading-tight text-white sm:text-[42px]">{movie.title}</h1>
 
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-zinc-400">
-                  {movie.year && <span>{movie.year}</span>}
-                  {movie.runtime && <span>· {movie.runtime}</span>}
-                  {movie.genre && <span>· {movie.genre}</span>}
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] text-zinc-300">
+                  <span className="font-medium text-white">{movie.year}</span>
+                  <span className="flex items-center rounded border border-white/20 bg-white/5 px-1.5 py-0.5 text-[11px] font-bold tracking-wider text-white">
+                    HD
+                  </span>
+                  {movie.runtime && <span>{movie.runtime}</span>}
+                  {movie.genre && <span>{movie.genre}</span>}
                 </div>
 
-                <button
-                  onClick={onWatchNow}
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-red-600
-                             py-3.5 text-[16px] font-semibold text-white shadow-lg shadow-red-600/20
-                             transition hover:bg-red-500 sm:w-auto sm:px-10"
-                >
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                  Watch Now
-                </button>
+                <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+                  <button
+                    onClick={onWatchNow}
+                    className="flex w-full items-center justify-center gap-2 rounded-full bg-red-600
+                               py-3.5 text-[16px] font-semibold text-white shadow-lg shadow-red-600/20
+                               transition hover:bg-red-500 sm:w-auto sm:px-10"
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                    Watch Now
+                  </button>
+
+                  <button
+                    className="flex w-full items-center justify-center gap-2 rounded-full bg-zinc-800/80
+                               py-3.5 text-[16px] font-semibold text-white backdrop-blur transition
+                               hover:bg-zinc-700 sm:w-auto sm:px-10"
+                  >
+                    Trailer
+                  </button>
+                </div>
 
                 {movie.synopsis && (
-                  <p className="mt-6 max-w-2xl text-[15px] leading-relaxed text-zinc-300">{movie.synopsis}</p>
+                  <p className="mt-8 max-w-xl text-[15px] leading-relaxed text-zinc-300 sm:text-[16px]">
+                    {movie.synopsis}
+                  </p>
                 )}
 
                 {movie.cast?.length > 0 && (
-                  <p className="mt-4 text-[13.5px] text-zinc-400">
-                    <span className="font-semibold text-zinc-300">Starring:</span> {movie.cast.join(', ')}
+                  <p className="mt-6 text-[14px] text-zinc-400">
+                    <span className="font-semibold text-zinc-200">Starring:</span> {movie.cast.join(', ')}
                   </p>
                 )}
               </div>
