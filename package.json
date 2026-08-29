@@ -1,23 +1,15 @@
 {
-  "name": "promptvault",
+  "name": "your-app-name",
   "private": true,
-  "version": "1.0.0",
-  "type": "module",
+  "version": "0.0.0",
+  "type": "module", 
   "scripts": {
     "content": "node scripts/build-content.js",
+    "dev": "npm run content && vite",
     "build": "npm run content && vite build",
-    "dev": "vite",
-    "serve": "wrangler pages dev dist --persist-to=.wrangler/state",
-    "db:local": "wrangler d1 execute promptvault --local --persist-to=.wrangler/state --file=./schema.sql",
-    "db:remote": "wrangler d1 execute promptvault --remote --file=./schema.sql"
+    "preview": "vite preview"
   },
-  "dependencies": { "react": "^18.3.1", "react-dom": "^18.3.1" },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.17",
-    "vite": "^5.4.11",
-    "wrangler": "^3.99.0"
+  "dependencies": {
+    // ... your dependencies remain untouched
   }
 }
