@@ -4,7 +4,6 @@ export default function MovieDetails({ movie, unlocked, onWatchNow, onClose }) {
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
-    // Lock scroll underneath the full screen view
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
     
@@ -74,13 +73,18 @@ export default function MovieDetails({ movie, unlocked, onWatchNow, onClose }) {
                     Watch Now
                   </button>
 
-                  <button
-                    className="flex w-full items-center justify-center gap-2 rounded-full bg-zinc-800/80
-                               py-3.5 text-[16px] font-semibold text-white backdrop-blur transition
-                               hover:bg-zinc-700 sm:w-auto sm:px-10"
-                  >
-                    Trailer
-                  </button>
+                  {movie.trailerUrl && (
+                    <a
+                      href={movie.trailerUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-full items-center justify-center gap-2 rounded-full bg-zinc-800/80
+                                 py-3.5 text-[16px] font-semibold text-white backdrop-blur transition
+                                 hover:bg-zinc-700 sm:w-auto sm:px-10"
+                    >
+                      Trailer
+                    </a>
+                  )}
                 </div>
 
                 {movie.synopsis && (
