@@ -15,7 +15,7 @@ export default function MovieDetails({ movie, allMovies, unlocked, onWatchNow, o
 
   if (!movie) return null;
 
-  const related = (allMovies || []).filter(
+  const recommended = (allMovies || []).filter(
     (m) => m.id !== movie.id && m.genres?.some((g) => movie.genres?.includes(g))
   );
 
@@ -39,93 +39,90 @@ export default function MovieDetails({ movie, allMovies, unlocked, onWatchNow, o
         <VideoPlayer movie={movie} embedUrl={movie.trailerEmbedUrl} label="Trailer" onBack={() => setShowTrailer(false)} />
       ) : (
         <>
-          <div className="relative h-[48vh] w-full overflow-hidden sm:h-[58vh]">
+          <div className="relative h-[62vh] min-h-[420px] w-full overflow-hidden sm:h-[64vh]">
             <img
               src={movie.backdrop || movie.poster}
               alt=""
-              className="h-full w-full scale-110 object-cover object-top [animation:kenburns_18s_ease-in-out_infinite_alternate]"
+              className="h-full w-full object-cover object-top"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-black/20" />
-            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/70 via-transparent to-zinc-950/40" />
-            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-zinc-950 to-transparent" />
-          </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/25 to-black/10" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-zinc-950 to-transparent" />
 
-          <div className="relative mx-auto -mt-28 max-w-4xl px-5 sm:-mt-36 sm:px-8">
-            <div className="flex flex-col gap-6 sm:flex-row sm:gap-9">
-              <img
-                src={movie.poster}
-                alt={movie.title}
-                className="h-64 w-44 shrink-0 self-start rounded-xl object-cover shadow-2xl ring-1 ring-white/10 sm:h-[22rem] sm:w-60"
-              />
-
-              <div className="min-w-0 pt-2 sm:pt-6">
-                <h1 className="text-[30px] font-bold leading-[1.05] tracking-tight text-white sm:text-[42px]">
-                  {movie.title}
-                </h1>
-
-                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px] text-zinc-400">
-                  {movie.year && <span className="font-medium text-zinc-300">{movie.year}</span>}
-                  {movie.runtime && <span>{movie.runtime}</span>}
-                  {movie.genres?.length > 0 && <span>{movie.genres.join(', ')}</span>}
-                  <span className="rounded-full border border-zinc-700 bg-zinc-900/60 px-2 py-0.5 text-[10.5px]
-                                   font-medium uppercase tracking-wide text-zinc-400">
-                    Public Domain
-                  </span>
-                </div>
-
-                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                  <button
-                    onClick={onWatchNow}
-                    className="flex items-center justify-center gap-2 rounded-full bg-red-600
-                               py-3.5 text-[16px] font-semibold text-white shadow-lg shadow-red-600/25
-                               transition duration-150 hover:scale-[1.015] hover:bg-red-500 active:scale-[0.985]
-                               sm:px-11"
-                  >
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                    Watch Now
-                  </button>
-
-                  {movie.trailerEmbedUrl && (
-                    <button
-                      onClick={() => setShowTrailer(true)}
-                      className="flex items-center justify-center gap-2 rounded-full bg-white/10 py-3.5
-                                 text-[15px] font-semibold text-white ring-1 ring-white/15 backdrop-blur-sm
-                                 transition duration-150 hover:bg-white/15 sm:px-8"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4.5 w-4.5">
-                        <path d="M8 5v14l11-7z" fill="currentColor" stroke="none" />
-                      </svg>
-                      Play Trailer
-                    </button>
-                  )}
-                </div>
-
-                {movie.synopsis && (
-                  <p className="mt-7 max-w-2xl text-[15px] leading-relaxed text-zinc-300">
-                    {movie.synopsis}
-                  </p>
-                )}
-
-                {movie.cast?.length > 0 && (
-                  <p className="mt-5 text-[13.5px] leading-relaxed text-zinc-400">
-                    <span className="font-semibold text-zinc-200">Starring </span>
-                    {movie.cast.join(', ')}
-                  </p>
-                )}
-              </div>
+            <div className="absolute inset-x-0 bottom-0 px-5 pb-6 sm:px-8">
+              <h1 className="text-[34px] font-extrabold leading-[1.02] tracking-tight text-white drop-shadow-lg sm:text-[46px]">
+                {movie.title}
+              </h1>
             </div>
           </div>
 
-          {related.length > 0 && (
-            <div className="relative mx-auto mt-14 max-w-6xl pb-20">
-              <h2 className="mb-3 px-5 text-[15px] font-semibold tracking-tight text-zinc-200 sm:px-8 sm:text-[17px]">
-                More {movie.genres[0]}
-              </h2>
+          <div className="relative mx-auto max-w-4xl px-5 pb-20 pt-5 sm:px-8">
+            <div className="flex flex-wrap items-center gap-2">
+              {movie.year && <Pill icon="calendar">{movie.year}</Pill>}
+              {movie.runtime && <Pill icon="clock">{movie.runtime}</Pill>}
+              {movie.genres?.map((g) => (
+                <Pill key={g} icon="tag">{g}</Pill>
+              ))}
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={onWatchNow}
+                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-red-600
+                           py-3.5 text-[16px] font-semibold text-white shadow-lg shadow-red-600/25
+                           transition duration-150 hover:scale-[1.01] hover:bg-red-500 active:scale-[0.99]"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                Watch Now
+              </button>
+
+              {movie.trailerEmbedUrl && (
+                <button
+                  onClick={() => setShowTrailer(true)}
+                  className="flex items-center justify-center gap-2 rounded-full bg-white/10 py-3.5
+                             text-[15px] font-semibold text-white ring-1 ring-white/15 backdrop-blur-sm
+                             transition duration-150 hover:bg-white/15 sm:px-8"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="h-4.5 w-4.5">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                  Trailer
+                </button>
+              )}
+            </div>
+
+            {movie.synopsis && (
+              <div className="mt-8">
+                <h2 className="mb-2 text-[19px] font-bold text-white">Overview</h2>
+                <p className="text-[15px] leading-relaxed text-zinc-400">{movie.synopsis}</p>
+              </div>
+            )}
+
+            {movie.cast?.length > 0 && (
+              <div className="mt-8">
+                <h2 className="mb-3 text-[19px] font-bold text-white">Cast</h2>
+                <div className="flex flex-wrap gap-2">
+                  {movie.cast.map((name) => (
+                    <span
+                      key={name}
+                      className="rounded-full bg-zinc-800/70 px-3.5 py-1.5 text-[13px] font-medium text-zinc-200 ring-1 ring-white/5"
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {recommended.length > 0 && (
+            <div className="relative mx-auto max-w-6xl pb-20">
+              <h2 className="mb-3 px-5 text-[19px] font-bold text-white sm:px-8">Recommended</h2>
               <div className="flex gap-3 overflow-x-auto scroll-smooth px-5 pb-2 [-ms-overflow-style:none]
                               [scrollbar-width:none] sm:gap-4 sm:px-8 [&::-webkit-scrollbar]:hidden">
-                {related.map((m) => (
+                {recommended.map((m) => (
                   <div key={m.id} className="w-[42vw] shrink-0 sm:w-[200px]">
                     <PosterCard movie={m} onClick={() => onSelect(m)} />
                   </div>
@@ -135,11 +132,23 @@ export default function MovieDetails({ movie, allMovies, unlocked, onWatchNow, o
           )}
         </>
       )}
-
-      <style>{`
-        @keyframes kenburns { from { transform: scale(1.1) translateY(0); } to { transform: scale(1.18) translateY(-1%); } }
-      `}</style>
     </div>
+  );
+}
+
+function Pill({ icon, children }) {
+  const icons = {
+    calendar: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></>,
+    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+    tag: <><path d="M20.59 13.41L11 4H4v7l9.59 9.59a2 2 0 002.82 0l4.18-4.18a2 2 0 000-2.82z" /><circle cx="7.5" cy="7.5" r="1" fill="currentColor" /></>,
+  };
+  return (
+    <span className="flex items-center gap-1.5 rounded-full bg-zinc-800/70 px-3 py-1.5 text-[13px] font-medium text-zinc-200 ring-1 ring-white/5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 text-red-500">
+        {icons[icon]}
+      </svg>
+      {children}
+    </span>
   );
 }
 
