@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { MOVIES } from './movies.js'; // Importing the dynamically generated file
+import { useState, useEffect } from 'react';
+import { MOVIES } from './movies.js';
 import MovieGrid from './components/MovieGrid';
 import MovieDetails from './components/MovieDetails';
 import UnlockSheet from './components/UnlockSheet';
@@ -8,6 +8,13 @@ export default function App() {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [unlockingMovie, setUnlockingMovie] = useState(null);
   const [unlockedIds, setUnlockedIds] = useState(() => new Set());
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const openDetails = (movie) => setSelectedMovie(movie);
   const closeDetails = () => setSelectedMovie(null);
@@ -18,7 +25,7 @@ export default function App() {
   };
 
   const handleUnlockContinue = () => {
-    console.log("Loading CPA offers for:", unlockingMovie.title);
+    console.log("Triggering CPA offer flow for:", unlockingMovie.title);
   };
 
   const markUnlocked = (movieId) => {
@@ -32,17 +39,26 @@ export default function App() {
   const closeUnlockSheet = () => setUnlockingMovie(null);
 
   return (
-    <div className="min-h-screen bg-zinc-950 font-display">
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-zinc-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <h1 className="text-[20px] font-bold tracking-tight text-white">
-            Free<span className="text-red-500">Reel</span>
+    <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-red-500/30">
+      <header 
+        className={`fixed top-0 inset-x-0 z-40 transition-all duration-300 ${
+          isScrolled ? 'bg-zinc-950/95 backdrop-blur-md border-b border-white/5 py-3' : 'bg-transparent py-5'
+        }`}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-8">
+          <h1 className="text-2xl font-black tracking-tighter text-white">
+            Free<span className="text-red-600">Reel</span>
           </h1>
-          <span className="text-[12px] text-zinc-500">Public Domain Movies</span>
+          <div className="flex items-center gap-4">
+            <button className="text-sm font-semibold text-zinc-300 hover:text-white transition">Sign In</button>
+            <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-zinc-700 to-zinc-500 ring-2 ring-transparent hover:ring-white/20 transition cursor-pointer" />
+          </div>
         </div>
       </header>
 
-      <MovieGrid movies={MOVIES} onSelect={openDetails} />
+      <main className="pb-24">
+        <MovieGrid movies={MOVIES} onSelect={openDetails} />
+      </main>
 
       {selectedMovie && (
         <MovieDetails
@@ -55,11 +71,7 @@ export default function App() {
 
       {unlockingMovie && (
         <UnlockSheet
-          item={{ 
-            title: unlockingMovie.title, 
-            image: unlockingMovie.poster, 
-            words: 'HD Movie' 
-          }}
+          item={{ title: unlockingMovie.title, image: unlockingMovie.poster }}
           onContinue={handleUnlockContinue}
           onClose={closeUnlockSheet}
         />
