@@ -1,145 +1,83 @@
 import { useEffect, useState } from 'react';
 
 export default function UnlockSheet({ item, onContinue, onClose }) {
-  const [showOffers, setShowOffers] = useState(false);
-  const [offers, setOffers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    if (!item) {
-      setShowOffers(false);
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-      return;
-    }
-
+    if (!item) return;
     const onKey = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
-    
     document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-
+    
     return () => {
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
     };
   }, [item, onClose]);
 
   if (!item) return null;
 
-  const loadOffers = async () => {
-    onContinue();
-
-    setShowOffers(true);
-    setLoading(true);
-    try {
-      const res = await fetch('/api/offers');
-      const data = await res.json();
-      setOffers(data.offers || []);
-    } catch (error) {
-      console.error("Failed to load offers", error);
-    }
-    setLoading(false);
+  const handleVerification = () => {
+    setIsProcessing(true);
+    // Simulate a brief "secure connection" delay before triggering the actual CPA flow
+    setTimeout(() => {
+      onContinue();
+      setIsProcessing(false);
+    }, 800);
   };
 
   return (
-    <div
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fade sm:items-center"
-    >
-      <div className="w-full max-w-[440px] rounded-t-3xl bg-card p-6 shadow-2xl ring-1 ring-white/10 animate-sheet-up
-                      sm:rounded-3xl sm:p-7 max-h-[85vh] flex flex-col">
-        <div className="mb-4 flex items-start gap-4 shrink-0">
-          <img src={item.image} alt="" className="h-16 w-12 shrink-0 rounded-lg object-cover" />
-          <div className="min-w-0">
-            <h3 className="font-display text-[20px] font-600 leading-tight text-ink line-clamp-1">{item.title}</h3>
-            <p className="mt-0.5 text-[13px] text-ink-faint">Ready to watch · {item.words}</p>
+    <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose} />
+      
+      <div className="relative w-full max-w-md transform overflow-hidden rounded-t-3xl bg-zinc-900 p-6 shadow-2xl ring-1 ring-white/10 transition-all sm:rounded-2xl sm:p-8 animate-in slide-in-from-bottom-8 duration-300 ease-out">
+        
+        <div className="mb-6 flex items-start gap-4 border-b border-white/5 pb-6">
+          <img src={item.image} alt="" className="h-20 w-14 shrink-0 rounded-md object-cover shadow-md bg-zinc-800" />
+          <div className="flex flex-col justify-center pt-1">
+            <h3 className="text-lg font-bold leading-tight text-white">{item.title}</h3>
+            <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-emerald-400">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              Ready to Stream
+            </p>
           </div>
         </div>
 
-        {!showOffers ? (
-          <>
-            <p className="text-[15px] leading-relaxed text-ink-soft shrink-0">
-              This platform is free. To start watching, complete <span className="font-600 text-ink">one quick step</span> from
-              our partners — it's what keeps the movies free. You'll come right back and playback begins automatically.
-            </p>
+        <div className="space-y-4">
+          <h4 className="text-base font-semibold text-zinc-100">Quick Verification Required</h4>
+          <p className="text-sm leading-relaxed text-zinc-400">
+            To prevent automated bots and keep our servers fast for real users, please complete a brief free verification step from our sponsors. Playback will begin automatically upon completion.
+          </p>
 
-            <button
-              onClick={loadOffers}
-              className="mt-5 w-full rounded-full bg-accent py-3.5 text-[15px] font-600 text-white
-                          transition hover:bg-red-500 shrink-0"
-            >
-              Continue
-            </button>
-          </>
-        ) : (
-          <div className="flex-1 overflow-y-auto mt-2 min-h-[200px] border-t border-line pt-4">
-            {loading ? (
-              <div className="flex items-center justify-center h-32">
-                <span className="h-6 w-6 animate-spin rounded-full border-2 border-ink/30 border-t-ink" />
-              </div>
-            ) : offers.length > 0 ? (
-              <div className="flex flex-col gap-2">
-                <p className="text-[12.5px] text-ink-faint -mt-1 mb-1">
-                  Complete <span className="font-600 text-ink">any one</span> task below to unlock.
-                </p>
-                {offers.map((offer, idx) => (
-                  <OfferRow key={idx} offer={{ ...offer, rank: idx + 1 }} />
-                ))}
-              </div>
+          <button
+            onClick={handleVerification}
+            disabled={isProcessing}
+            className="mt-6 flex w-full items-center justify-center rounded-md bg-white py-3.5 text-sm font-bold text-black transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-70 disabled:hover:scale-100"
+          >
+            {isProcessing ? (
+              <span className="flex items-center gap-2">
+                <svg className="h-4 w-4 animate-spin text-black" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Connecting...
+              </span>
             ) : (
-              <p className="text-center text-[14px] text-ink-soft py-4">No offers available right now.</p>
+              "Verify & Watch Now"
             )}
-          </div>
-        )}
+          </button>
+        </div>
 
         <button
           onClick={onClose}
-          className="mt-3 w-full py-2 text-[14px] font-500 text-ink-faint transition hover:text-ink shrink-0"
+          className="mt-4 w-full py-2 text-center text-xs font-medium text-zinc-500 transition hover:text-zinc-300"
         >
-          Maybe later
+          Cancel
         </button>
       </div>
     </div>
-  );
-}
-
-function OfferRow({ offer }) {
-  return (
-    <a
-      href={offer.link}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group relative flex items-center gap-2.5 rounded-2xl border border-line
-                 bg-paper p-2.5 shadow-sm transition hover:-translate-y-0.5 hover:border-ink/20
-                 hover:shadow-md sm:gap-3 sm:p-3"
-    >
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full
-                        bg-ink text-[11px] font-700 text-paper sm:h-6 sm:w-6 sm:text-[12px]">
-        {offer.rank}
-      </span>
-      
-      <img
-        src={offer.picture}
-        alt=""
-        className="h-10 w-10 shrink-0 rounded-lg object-cover ring-1 ring-black/5 sm:h-12 sm:w-12 sm:rounded-xl"
-      />
-      
-      <div className="min-w-0 flex-1" dir="auto">
-        <h4 className="text-[12.5px] font-600 leading-snug text-ink line-clamp-1 sm:text-[14px]">
-          {offer.name}
-        </h4>
-        <p className="mt-0.5 text-[11px] leading-snug text-ink-soft sm:text-[12px] sm:line-clamp-2">
-          {offer.adcopy}
-        </p>
-      </div>
-
-      <span className="shrink-0 rounded-full bg-ink px-2 py-1 text-[9px]
-                        font-700 uppercase tracking-wide text-paper
-                        transition group-hover:bg-[#111111] sm:px-2.5 sm:text-[10px]">
-        Task
-      </span>
-    </a>
   );
 }
