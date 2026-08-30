@@ -35,20 +35,20 @@ export default function MovieDetails({ movie, unlocked, onWatchNow, onClose }) {
               alt="" 
               className="h-full w-full object-cover animate-[pulse_20s_ease-in-out_infinite_alternate] scale-110" 
             />
-            <div className="absolute inset-0 bg-black/30" />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/60 to-transparent sm:via-zinc-950/40" />
+            {/* Reduced gradient opacity so the image stays visible on mobile */}
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/40 via-transparent to-transparent sm:from-zinc-950 sm:via-zinc-950/50" />
           </div>
 
           <div className="relative mx-auto -mt-32 max-w-6xl px-5 pb-24 sm:-mt-40 sm:px-8">
             <div className="flex flex-col gap-8 sm:flex-row sm:gap-12">
               <div className="w-40 shrink-0 sm:w-64">
-                <div className="aspect-[2/3] overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/10 bg-zinc-900">
+                <div className="aspect-[2/3] overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/10 bg-zinc-900 relative z-10">
                   <img src={movie.poster} alt={movie.title} className="h-full w-full object-cover" />
                 </div>
               </div>
 
-              <div className="flex min-w-0 flex-1 flex-col justify-end pt-2 sm:pt-8">
+              <div className="flex min-w-0 flex-1 flex-col justify-end pt-2 sm:pt-8 relative z-10">
                 <h1 className="text-3xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">{movie.title}</h1>
 
                 <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-zinc-400">
