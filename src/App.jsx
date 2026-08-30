@@ -25,7 +25,15 @@ export default function App() {
   };
 
   const handleUnlockContinue = () => {
-    console.log("Triggering CPA offer flow for:", unlockingMovie.title);
+    // TODO: this is where your real CPA offer flow goes (open the inline
+    // offers modal, redirect to the OGAds locker, etc.). Once that flow
+    // reports success, call markUnlocked so the video actually plays —
+    // right now this just unlocks immediately as a stand-in.
+    console.log("Triggering CPA offer flow for:", unlockingMovie?.title);
+    if (unlockingMovie) {
+      markUnlocked(unlockingMovie.id);
+    }
+    setUnlockingMovie(null);
   };
 
   const markUnlocked = (movieId) => {
@@ -40,7 +48,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-red-500/30">
-      <header 
+      <header
         className={`fixed top-0 inset-x-0 z-40 transition-all duration-300 ${
           isScrolled ? 'bg-zinc-950/95 backdrop-blur-md border-b border-white/5 py-3' : 'bg-transparent py-5'
         }`}
@@ -63,8 +71,10 @@ export default function App() {
       {selectedMovie && (
         <MovieDetails
           movie={selectedMovie}
+          allMovies={MOVIES}
           unlocked={unlockedIds.has(selectedMovie.id)}
           onWatchNow={handleWatchNow}
+          onSelect={openDetails}
           onClose={closeDetails}
         />
       )}
