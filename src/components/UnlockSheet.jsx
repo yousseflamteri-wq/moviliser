@@ -1,83 +1,77 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 export default function UnlockSheet({ item, onContinue, onClose }) {
-  const [isProcessing, setIsProcessing] = useState(false);
-
   useEffect(() => {
-    if (!item) return;
     const onKey = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
-    
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
-    };
-  }, [item, onClose]);
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [onClose]);
 
   if (!item) return null;
 
-  const handleVerification = () => {
-    setIsProcessing(true);
-    // Simulate a brief "secure connection" delay before triggering the actual CPA flow
-    setTimeout(() => {
-      onContinue();
-      setIsProcessing(false);
-    }, 800);
-  };
-
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose} />
-      
-      <div className="relative w-full max-w-md transform overflow-hidden rounded-t-3xl bg-zinc-900 p-6 shadow-2xl ring-1 ring-white/10 transition-all sm:rounded-2xl sm:p-8 animate-in slide-in-from-bottom-8 duration-300 ease-out">
-        
-        <div className="mb-6 flex items-start gap-4 border-b border-white/5 pb-6">
-          <img src={item.image} alt="" className="h-20 w-14 shrink-0 rounded-md object-cover shadow-md bg-zinc-800" />
-          <div className="flex flex-col justify-center pt-1">
-            <h3 className="text-lg font-bold leading-tight text-white">{item.title}</h3>
-            <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-emerald-400">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              Ready to Stream
-            </p>
+    <div
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 backdrop-blur-sm animate-fade sm:items-center"
+    >
+      <div className="w-full max-w-[440px] rounded-t-3xl bg-zinc-900 p-6 shadow-2xl ring-1 ring-white/10 animate-sheet-up
+                      sm:rounded-3xl sm:p-8">
+        <div className="mb-5 flex items-start gap-4">
+          <img src={item.image} alt="" className="h-20 w-14 shrink-0 rounded-lg object-cover ring-1 ring-white/10" />
+          <div className="min-w-0 pt-0.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-red-500">Ready to watch</p>
+            <h3 className="mt-0.5 text-[19px] font-semibold leading-tight text-white line-clamp-2">{item.title}</h3>
           </div>
         </div>
 
-        <div className="space-y-4">
-          <h4 className="text-base font-semibold text-zinc-100">Quick Verification Required</h4>
-          <p className="text-sm leading-relaxed text-zinc-400">
-            To prevent automated bots and keep our servers fast for real users, please complete a brief free verification step from our sponsors. Playback will begin automatically upon completion.
-          </p>
-
-          <button
-            onClick={handleVerification}
-            disabled={isProcessing}
-            className="mt-6 flex w-full items-center justify-center rounded-md bg-white py-3.5 text-sm font-bold text-black transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-70 disabled:hover:scale-100"
-          >
-            {isProcessing ? (
-              <span className="flex items-center gap-2">
-                <svg className="h-4 w-4 animate-spin text-black" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Connecting...
-              </span>
-            ) : (
-              "Verify & Watch Now"
-            )}
-          </button>
+        <div className="mb-5 flex items-center gap-4 rounded-2xl bg-zinc-800/60 px-4 py-3 ring-1 ring-white/5">
+          <TrustPoint icon="shield" label="No account needed" />
+          <TrustPoint icon="clock" label="Under a minute" />
+          <TrustPoint icon="lock" label="Always free" />
         </div>
 
+        <p className="text-[14.5px] leading-relaxed text-zinc-400">
+          This platform stays free by partnering with advertisers instead of charging you.
+          Complete <span className="font-semibold text-zinc-200">one quick step</span> below,
+          and playback starts automatically when you're done.
+        </p>
+
+        <button
+          onClick={onContinue}
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-red-600 py-3.5
+                     text-[15px] font-semibold text-white shadow-lg shadow-red-600/20
+                     transition duration-150 hover:scale-[1.01] hover:bg-red-500 active:scale-[0.99]"
+        >
+          Continue
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-4 w-4">
+            <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
         <button
           onClick={onClose}
-          className="mt-4 w-full py-2 text-center text-xs font-medium text-zinc-500 transition hover:text-zinc-300"
+          className="mt-2.5 w-full py-2 text-[14px] font-medium text-zinc-500 transition hover:text-zinc-300"
         >
-          Cancel
+          Maybe later
         </button>
       </div>
+    </div>
+  );
+}
+
+function TrustPoint({ icon, label }) {
+  const icons = {
+    shield: <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />,
+    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></>,
+    lock: <><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" /></>,
+  };
+  return (
+    <div className="flex flex-1 flex-col items-center gap-1.5 text-center">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+           className="h-5 w-5 text-zinc-400">
+        {icons[icon]}
+      </svg>
+      <span className="text-[10.5px] leading-tight text-zinc-500">{label}</span>
     </div>
   );
 }
