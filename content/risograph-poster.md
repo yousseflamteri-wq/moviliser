@@ -1,6 +1,11 @@
 ---
-title: Risograph Poster Texture
-tags: graphic, print, retro
-teaser: 62
+title: love and love
+year: 2005
+runtime: 2h 05m
+genre: war
+cast: Duane Jones, Judith O'Dea, Karl Hardman
+videoEmbedUrl: https://archive.org/embed/night_of_the_living_deaad
+trailerUrl: https://www.youtube.com/watch?v=0TbGtIQvehk
 ---
-Two-colour risograph print poster design of a mountain range, fluorescent pink and deep navy inks only, deliberate 2mm misregistration between the layers, visible paper tooth and uneven ink coverage with roller streaks, heavy dot-screen texture in the mid-tones, off-white recycled paper stock, flat vector shapes with no gradients, generous negative space in the upper third, 1970s Japanese travel-poster composition
+
+it is about johon . a soldier in the world war One lhwa dwaa
