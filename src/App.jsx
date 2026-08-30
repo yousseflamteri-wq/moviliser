@@ -71,11 +71,10 @@ export default function App() {
       {selectedMovie && (
         <MovieDetails
           movie={selectedMovie}
-          allMovies={MOVIES}
           unlocked={unlockedIds.has(selectedMovie.id)}
           onWatchNow={handleWatchNow}
-          onSelect={openDetails}
           onClose={closeDetails}
+          onSelect={openDetails} 
         />
       )}
 
