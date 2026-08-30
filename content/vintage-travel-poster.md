@@ -1,6 +1,11 @@
 ---
-title: Swiss Alpine Travel Poster, 1930s
-tags: poster, vintage, travel
-teaser: 64
+title: the curis case of benjamib buttom
+year: 2018
+runtime: 3h 06m
+genre: war
+cast: Duane bodwi jana ,Jones, Judith O'Dea, Karl Hardman
+videoEmbedUrl: https://archive.org/embed/night_of_the_living_dead
+trailerUrl: https://www.youtube.com/watch?v=0TbGtIQvehs
 ---
-Vintage 1930s Swiss tourism travel poster of a funicular railway climbing toward a snow-capped alpine peak, flat gouache-style shapes with hand-airbrushed gradients, limited five-colour palette of cream, cobalt, alpine rose, deep pine and warm grey, geometric Art Deco stylisation of the mountain ridges, bold condensed sans-serif lettering reserved along the bottom third, subtle offset-litho paper grain, high contrast between the sunlit snowfield and the shadowed valley
+
+it is about johon . a soldier in the world war One
