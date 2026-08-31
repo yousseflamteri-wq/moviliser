@@ -1,77 +1,124 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-export default function UnlockSheet({ item, onContinue, onClose }) {
+export default function UnlockSheet({ item, onUnlocked, onClose }) {
+  const [offers, setOffers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
+    const handleKey = (e) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', handleKey);
     document.body.style.overflow = 'hidden';
-    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+
+    // Fetch live OGAds offers from the Cloudflare Function
+    fetch('/api/offers')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.offers) {
+          setOffers(data.offers);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+
+    return () => {
+      window.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = '';
+    };
   }, [onClose]);
 
-  if (!item) return null;
+  const handleOfferClick = (link) => {
+    window.open(link, '_blank');
+    // Start playback immediately when the user clicks an offer
+    setTimeout(() => {
+      onUnlocked();
+      onClose();
+    }, 1200);
+  };
 
   return (
-    <div
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 backdrop-blur-sm animate-fade sm:items-center"
-    >
-      <div className="w-full max-w-[440px] rounded-t-3xl bg-zinc-900 p-6 shadow-2xl ring-1 ring-white/10 animate-sheet-up
-                      sm:rounded-3xl sm:p-8">
-        <div className="mb-5 flex items-start gap-4">
-          <img src={item.image} alt="" className="h-20 w-14 shrink-0 rounded-lg object-cover ring-1 ring-white/10" />
-          <div className="min-w-0 pt-0.5">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-red-500">Ready to watch</p>
-            <h3 className="mt-0.5 text-[19px] font-semibold leading-tight text-white line-clamp-2">{item.title}</h3>
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
+
+      <div className="relative w-full max-w-md bg-[#121214] border-t sm:border border-white/10 rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl z-10 animate-in slide-in-from-bottom-6 duration-300">
+        
+        {/* Header */}
+        <div className="flex items-start gap-4 pb-5 border-b border-white/10">
+          <img
+            src={item.image}
+            alt=""
+            className="h-20 w-14 rounded-lg object-cover bg-zinc-800 ring-1 ring-white/10 shrink-0"
+          />
+          <div>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+              Stream Ready
+            </span>
+            <h3 className="text-base font-bold text-white leading-tight mt-1 line-clamp-1">
+              {item.title}
+            </h3>
+            <p className="text-xs text-zinc-400 mt-1">Complete 1 quick sponsor verification to unlock full HD stream.</p>
           </div>
         </div>
 
-        <div className="mb-5 flex items-center gap-4 rounded-2xl bg-zinc-800/60 px-4 py-3 ring-1 ring-white/5">
-          <TrustPoint icon="shield" label="No account needed" />
-          <TrustPoint icon="clock" label="Under a minute" />
-          <TrustPoint icon="lock" label="Always free" />
+        {/* Dynamic Offers List */}
+        <div className="py-4">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">
+            Choose an offer to continue:
+          </h4>
+
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-14 rounded-xl bg-zinc-800/60 animate-pulse" />
+              ))}
+            </div>
+          ) : offers.length > 0 ? (
+            <div className="space-y-2.5 max-h-60 overflow-y-auto [&::-webkit-scrollbar]:hidden">
+              {offers.map((offer) => (
+                <div
+                  key={offer.offerid || offer.name_short}
+                  onClick={() => handleOfferClick(offer.link)}
+                  className="flex items-center justify-between gap-3 p-3 rounded-xl bg-zinc-900 border border-white/5 hover:border-red-500/50 hover:bg-zinc-800/80 cursor-pointer transition active:scale-98 group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    {offer.picture && (
+                      <img src={offer.picture} alt="" className="h-9 w-9 rounded-lg object-cover shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white group-hover:text-red-400 truncate">
+                        {offer.name_short}
+                      </p>
+                      <p className="text-[11px] text-zinc-400 truncate">{offer.adcopy}</p>
+                    </div>
+                  </div>
+                  <button className="shrink-0 text-xs font-bold text-white bg-red-600 px-3 py-1.5 rounded-lg shadow-sm">
+                    Free
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-4 text-center">
+              <button
+                onClick={() => {
+                  onUnlocked();
+                  onClose();
+                }}
+                className="w-full py-3 rounded-xl bg-red-600 font-bold text-white hover:bg-red-500 transition"
+              >
+                Continue to Stream
+              </button>
+            </div>
+          )}
         </div>
 
-        <p className="text-[14.5px] leading-relaxed text-zinc-400">
-          This platform stays free by partnering with advertisers instead of charging you.
-          Complete <span className="font-semibold text-zinc-200">one quick step</span> below,
-          and playback starts automatically when you're done.
-        </p>
-
-        <button
-          onClick={onContinue}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-red-600 py-3.5
-                     text-[15px] font-semibold text-white shadow-lg shadow-red-600/20
-                     transition duration-150 hover:scale-[1.01] hover:bg-red-500 active:scale-[0.99]"
-        >
-          Continue
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-4 w-4">
-            <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
         <button
           onClick={onClose}
-          className="mt-2.5 w-full py-2 text-[14px] font-medium text-zinc-500 transition hover:text-zinc-300"
+          className="w-full py-2 text-center text-xs font-semibold text-zinc-500 hover:text-zinc-300 transition"
         >
-          Maybe later
+          Cancel
         </button>
       </div>
-    </div>
-  );
-}
-
-function TrustPoint({ icon, label }) {
-  const icons = {
-    shield: <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />,
-    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></>,
-    lock: <><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" /></>,
-  };
-  return (
-    <div className="flex flex-1 flex-col items-center gap-1.5 text-center">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-           className="h-5 w-5 text-zinc-400">
-        {icons[icon]}
-      </svg>
-      <span className="text-[10.5px] leading-tight text-zinc-500">{label}</span>
     </div>
   );
 }
