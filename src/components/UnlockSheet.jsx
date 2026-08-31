@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 export default function UnlockSheet({ item, onComplete, onClose }) {
   const [offers, setOffers] = useState([]);
@@ -6,41 +6,47 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
   const [error, setError] = useState(null);
   const [clickedOffer, setClickedOffer] = useState(false);
 
+  const loadOffers = useCallback(() => {
+    setLoading(true);
+    setError(null);
+
+    fetch('/api/offers')
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || `Request failed (${res.status})`);
+        }
+        return data;
+      })
+      .then((data) => {
+        setOffers(Array.isArray(data.offers) ? data.offers : []);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
   useEffect(() => {
     if (!item) return;
     const onKey = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
 
-    // Fetch offers via Cloudflare Pages serverless proxy
-    fetch('/api/offers')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.offers)) {
-          setOffers(data.offers);
-        } else if (data.offers && Array.isArray(data.offers)) {
-          setOffers(data.offers);
-        } else {
-          setError(data.error || 'No current verification offers available.');
-        }
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    loadOffers();
 
     return () => {
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
     };
-  }, [item, onClose]);
+  }, [item, onClose, loadOffers]);
 
   if (!item) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center p-0 sm:p-4 animate-in fade-in duration-200">
       <div className="fixed inset-0 bg-black/85 backdrop-blur-md" onClick={onClose} />
-      
+
       <div className="relative w-full max-w-lg overflow-hidden rounded-t-3xl sm:rounded-2xl border border-white/10 bg-zinc-900/95 p-6 shadow-2xl backdrop-blur-xl">
-        
+
         {/* Header Movie Meta */}
         <div className="flex items-start gap-3 border-b border-white/10 pb-4">
           <img src={item.image} alt="" className="h-16 w-12 shrink-0 rounded-lg object-cover bg-zinc-800 ring-1 ring-white/10" />
@@ -76,12 +82,24 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
               <div key={i} className="h-14 rounded-xl bg-zinc-800/60 animate-pulse border border-white/5" />
             ))
           ) : error ? (
-            <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-center text-xs text-red-300">
-              {error}
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-center text-xs text-red-300 space-y-2">
+              <p>{error}</p>
+              <button
+                onClick={loadOffers}
+                className="rounded-lg border border-red-400/40 px-3 py-1.5 text-[11px] font-bold text-red-200 hover:bg-red-500/10"
+              >
+                Try Again
+              </button>
             </div>
           ) : offers.length === 0 ? (
-            <div className="py-6 text-center text-xs text-zinc-500">
-              No tasks available right now. Please try again in a few minutes.
+            <div className="py-6 text-center text-xs text-zinc-500 space-y-2">
+              <p>No tasks available right now. Please try again in a few minutes.</p>
+              <button
+                onClick={loadOffers}
+                className="rounded-lg border border-white/10 px-3 py-1.5 text-[11px] font-bold text-zinc-300 hover:bg-white/5"
+              >
+                Refresh
+              </button>
             </div>
           ) : (
             offers.map((offer) => (
