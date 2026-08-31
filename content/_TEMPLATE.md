@@ -1,11 +1,10 @@
 ---
-title: Night of the Living Dead
-year: 1968
-runtime: 1h 36m
-genre: Horror
-cast: Duane Jones, Judith O'Dea, Karl Hardman
-videoEmbedUrl: https://archive.org/embed/night_of_the_living_dead
-trailerUrl: https://www.youtube.com/watch?v=0TAGtIQvehs
+title: 1917
+year: 2019
+runtime: 2h 06m
+genre: War
+cast: George MacKay, Dean-Charles Chapman, Mark Strong
+videoEmbedUrl: https://your-real-video-source.com/1917
+trailerUrl: https://www.youtube.com/watch?v=YqNYrYUiMfg
 ---
-
-A group of strangers barricade themselves inside a rural farmhouse as the recently deceased rise as flesh-eating ghouls.
+Two young British soldiers are given a seemingly impossible mission: to deliver a message deep in enemy territory that will stop 1,600 men from walking straight into a deadly trap.
