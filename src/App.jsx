@@ -77,9 +77,6 @@ export default function App() {
               <span className="hidden sm:inline">Search...</span>
               <kbd className="hidden sm:inline-block rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-400 font-mono">⌘K</kbd>
             </button>
-
-            <button className="text-xs font-semibold text-zinc-300 hover:text-white transition">Sign In</button>
-            <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-zinc-700 to-zinc-500 ring-1 ring-white/20" />
           </div>
         </div>
       </header>
