@@ -3,12 +3,14 @@ import { MOVIES } from './movies.js';
 import MovieGrid from './components/MovieGrid';
 import MovieDetails from './components/MovieDetails';
 import UnlockSheet from './components/UnlockSheet';
+import GenreView from './components/GenreView';
 
 export default function App() {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [unlockingMovie, setUnlockingMovie] = useState(null);
   const [unlockedIds, setUnlockedIds] = useState(() => new Set());
   const [isScrolled, setIsScrolled] = useState(false);
+  const [activeGenre, setActiveGenre] = useState(null);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -25,36 +27,23 @@ export default function App() {
   };
 
   const handleUnlockContinue = () => {
-    // TODO: this is where your real CPA offer flow goes (open the inline
-    // offers modal, redirect to the OGAds locker, etc.). Once that flow
-    // reports success, call markUnlocked so the video actually plays —
-    // right now this just unlocks immediately as a stand-in.
-    console.log("Triggering CPA offer flow for:", unlockingMovie?.title);
-    if (unlockingMovie) {
-      markUnlocked(unlockingMovie.id);
-    }
-    setUnlockingMovie(null);
-  };
-
-  const markUnlocked = (movieId) => {
-    setUnlockedIds((prev) => {
-      const next = new Set(prev);
-      next.add(movieId);
-      return next;
-    });
+    console.log("Triggering CPA offer flow for:", unlockingMovie.title);
   };
 
   const closeUnlockSheet = () => setUnlockingMovie(null);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-red-500/30">
-      <header
+      <header 
         className={`fixed top-0 inset-x-0 z-40 transition-all duration-300 ${
-          isScrolled ? 'bg-zinc-950/95 backdrop-blur-md border-b border-white/5 py-3' : 'bg-transparent py-5'
+          isScrolled || activeGenre ? 'bg-zinc-950/95 backdrop-blur-md border-b border-white/5 py-3' : 'bg-transparent py-5'
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-8">
-          <h1 className="text-2xl font-black tracking-tighter text-white">
+          <h1 
+            onClick={() => setActiveGenre(null)} 
+            className="text-2xl font-black tracking-tighter text-white cursor-pointer"
+          >
             Free<span className="text-red-600">Reel</span>
           </h1>
           <div className="flex items-center gap-4">
@@ -65,7 +54,20 @@ export default function App() {
       </header>
 
       <main className="pb-24">
-        <MovieGrid movies={MOVIES} onSelect={openDetails} />
+        {activeGenre ? (
+          <GenreView 
+            genre={activeGenre} 
+            movies={MOVIES} 
+            onSelect={openDetails} 
+            onBack={() => setActiveGenre(null)} 
+          />
+        ) : (
+          <MovieGrid 
+            movies={MOVIES} 
+            onSelect={openDetails} 
+            onSeeAll={(genre) => setActiveGenre(genre)} 
+          />
+        )}
       </main>
 
       {selectedMovie && (
@@ -74,7 +76,7 @@ export default function App() {
           unlocked={unlockedIds.has(selectedMovie.id)}
           onWatchNow={handleWatchNow}
           onClose={closeDetails}
-          onSelect={openDetails} 
+          onSelect={openDetails}
         />
       )}
 
