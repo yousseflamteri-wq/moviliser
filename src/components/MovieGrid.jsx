@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-export default function MovieGrid({ movies, onSelect }) {
+export default function MovieGrid({ movies, onSelect, onSeeAll }) {
   const heroMovies = movies.slice(0, 5);
   const [heroIdx, setHeroIdx] = useState(0);
+  const dragStartX = useRef(null);
 
+  // Auto slide effect
   useEffect(() => {
     if (heroMovies.length <= 1) return;
     const timer = setInterval(() => {
@@ -11,6 +13,34 @@ export default function MovieGrid({ movies, onSelect }) {
     }, 4000);
     return () => clearInterval(timer);
   }, [heroMovies.length]);
+
+  // Handle manual swipe/drag navigation
+  const nextSlide = () => setHeroIdx((prev) => (prev + 1) % heroMovies.length);
+  const prevSlide = () => setHeroIdx((prev) => (prev - 1 + heroMovies.length) % heroMovies.length);
+
+  const handleTouchStart = (e) => {
+    dragStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!dragStartX.current) return;
+    const diff = dragStartX.current - e.changedTouches[0].clientX;
+    if (diff > 50) nextSlide();
+    if (diff < -50) prevSlide();
+    dragStartX.current = null;
+  };
+
+  const handleMouseDown = (e) => {
+    dragStartX.current = e.clientX;
+  };
+
+  const handleMouseUp = (e) => {
+    if (!dragStartX.current) return;
+    const diff = dragStartX.current - e.clientX;
+    if (diff > 50) nextSlide();
+    if (diff < -50) prevSlide();
+    dragStartX.current = null;
+  };
 
   const categorized = movies.reduce((acc, movie) => {
     const genre = movie.genre ? movie.genre.split(',')[0].trim() : 'Trending';
@@ -24,8 +54,14 @@ export default function MovieGrid({ movies, onSelect }) {
   return (
     <div className="flex flex-col gap-8 pb-12 overflow-x-hidden pt-20">
       
-      {/* 3D Hardware-Accelerated Hero Carousel */}
-      <div className="relative flex w-full max-w-4xl mx-auto h-[400px] sm:h-[500px] items-center justify-center">
+      {/* 3D Auto & Manual Sliding Hero Carousel */}
+      <div 
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        className="relative flex w-full max-w-4xl mx-auto h-[400px] sm:h-[500px] items-center justify-center cursor-grab active:cursor-grabbing touch-pan-y select-none"
+      >
         {heroMovies.map((movie, index) => {
           let styleClasses = 'opacity-0 scale-75 z-0 pointer-events-none translate-x-0';
           const isActive = index === heroIdx;
@@ -43,8 +79,11 @@ export default function MovieGrid({ movies, onSelect }) {
           return (
             <div 
               key={movie.id}
-              className={`absolute transform-gpu will-change-transform transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] w-[70%] sm:w-[50%] max-w-[320px] aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 cursor-pointer select-none ${styleClasses}`}
-              onClick={() => onSelect(movie)}
+              className={`absolute transform-gpu will-change-transform transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] w-[70%] sm:w-[50%] max-w-[320px] aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 ${styleClasses}`}
+              onClick={() => {
+                if (isActive) onSelect(movie);
+                else setHeroIdx(index);
+              }}
             >
               <img 
                 src={movie.poster} 
@@ -53,7 +92,6 @@ export default function MovieGrid({ movies, onSelect }) {
                 className="w-full h-full object-cover pointer-events-none"
               />
               
-              {/* Badges */}
               <div className="absolute top-3 left-3 flex items-center gap-1 rounded bg-black/70 px-2 py-1 text-xs font-bold text-yellow-500 backdrop-blur-sm">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -64,13 +102,11 @@ export default function MovieGrid({ movies, onSelect }) {
                 {movie.year || '2024'}
               </div>
 
-              {/* Bottom Gradient with Permanent Layout Wrapper */}
               <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end bg-gradient-to-t from-black via-black/90 to-transparent p-4 pt-16 pb-6 text-center">
                 <h2 className="text-lg sm:text-2xl font-bold text-white leading-tight drop-shadow-md line-clamp-2 mb-4">
                   {movie.title}
                 </h2>
                 
-                {/* Smooth Opacity Transition to Prevent DOM Layout Shifts */}
                 <div className={`w-full flex justify-center transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                   <button 
                     tabIndex={isActive ? 0 : -1}
@@ -99,7 +135,10 @@ export default function MovieGrid({ movies, onSelect }) {
             
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-[17px] font-semibold text-white capitalize">{genre}</h3>
-              <button className="text-[13px] font-medium text-red-600 hover:text-red-500">
+              <button 
+                onClick={() => onSeeAll(genre)}
+                className="text-[13px] font-medium text-red-600 hover:text-red-500"
+              >
                 See All
               </button>
             </div>
