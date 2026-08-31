@@ -5,7 +5,6 @@ import MovieDetails from './components/MovieDetails';
 import UnlockSheet from './components/UnlockSheet';
 import GenreView from './components/GenreView';
 import SearchModal from './components/SearchModal';
-import TrailerModal from './components/TrailerModal';
 
 export default function App() {
   const [selectedMovie, setSelectedMovie] = useState(null);
@@ -14,24 +13,28 @@ export default function App() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeGenre, setActiveGenre] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [trailerData, setTrailerData] = useState(null);
-
-  // Watchlist persisted via LocalStorage
+  
+  // Watchlist stored in localStorage
   const [watchlist, setWatchlist] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('freereel_watchlist') || '[]');
+      const saved = localStorage.getItem('moviliser_watchlist');
+      return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
   });
 
   useEffect(() => {
-    localStorage.setItem('freereel_watchlist', JSON.stringify(watchlist));
+    try {
+      localStorage.setItem('moviliser_watchlist', JSON.stringify(watchlist));
+    } catch (e) {
+      console.error(e);
+    }
   }, [watchlist]);
 
-  const toggleWatchlist = (movieId) => {
-    setWatchlist((prev) =>
-      prev.includes(movieId) ? prev.filter((id) => id !== movieId) : [...prev, movieId]
+  const toggleWatchlist = (id) => {
+    setWatchlist((prev) => 
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
@@ -56,85 +59,90 @@ export default function App() {
 
   const handleWatchNow = () => {
     if (!selectedMovie) return;
+    if (unlockedIds.has(selectedMovie.id)) return;
     setUnlockingMovie(selectedMovie);
   };
 
-  const handleUnlockSuccess = () => {
-    if (unlockingMovie) {
-      setUnlockedIds((prev) => new Set([...prev, unlockingMovie.id]));
-    }
+  const handleUnlockComplete = () => {
+    if (!unlockingMovie) return;
+    setUnlockedIds((prev) => new Set([...prev, unlockingMovie.id]));
+    setUnlockingMovie(null);
   };
 
   const closeUnlockSheet = () => setUnlockingMovie(null);
 
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-50 font-sans selection:bg-red-500/30">
-      
-      {/* Header */}
-      <header
+      <header 
         className={`fixed top-0 inset-x-0 z-40 transition-all duration-300 ${
-          isScrolled || activeGenre
-            ? 'bg-[#09090b]/90 backdrop-blur-xl border-b border-white/[0.08] py-3 shadow-2xl'
+          isScrolled || activeGenre 
+            ? 'bg-[#09090b]/85 backdrop-blur-xl border-b border-white/[0.08] py-3 shadow-2xl' 
             : 'bg-gradient-to-b from-black/80 via-black/30 to-transparent py-4'
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-8">
-          <div className="flex items-center gap-6">
-            <h1
-              onClick={() => setActiveGenre(null)}
-              className="text-2xl font-black tracking-tighter text-white cursor-pointer select-none"
-            >
-              Free<span className="text-red-600">Reel</span>
-            </h1>
-
-            {/* Watchlist Quick Tab */}
-            <button
-              onClick={() => setActiveGenre('watchlist')}
-              className={`text-xs font-semibold transition ${
-                activeGenre === 'watchlist' ? 'text-red-500' : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              My List ({watchlist.length})
-            </button>
-          </div>
+          <h1 
+            onClick={() => setActiveGenre(null)} 
+            className="text-2xl font-black tracking-tighter text-white cursor-pointer select-none"
+          >
+            Free<span className="text-red-600">Reel</span>
+          </h1>
 
           <div className="flex items-center gap-3">
             <button
+              onClick={() => setActiveGenre('watchlist')}
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                activeGenre === 'watchlist'
+                  ? 'border-red-600 bg-red-600 text-white'
+                  : 'border-white/10 bg-white/5 text-zinc-300 hover:text-white'
+              }`}
+            >
+              <svg viewBox="0 0 24 24" fill={watchlist.length > 0 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+              </svg>
+              <span>My List</span>
+              {watchlist.length > 0 && (
+                <span className="ml-0.5 rounded-full bg-zinc-800 px-1.5 py-0.2 text-[10px] text-zinc-200">
+                  {watchlist.length}
+                </span>
+              )}
+            </button>
+
+            <button
               onClick={() => setIsSearchOpen(true)}
-              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-zinc-400 backdrop-blur-md transition hover:border-white/20 hover:text-white"
+              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-zinc-400 backdrop-blur-md transition hover:border-white/20 hover:text-white"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
-              <span className="hidden sm:inline">Search...</span>
               <kbd className="hidden sm:inline-block rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-400 font-mono">⌘K</kbd>
             </button>
           </div>
         </div>
       </header>
 
-      {/* Main Content Area */}
       <main className="pb-24">
         {activeGenre ? (
-          <GenreView
-            genre={activeGenre}
-            movies={MOVIES}
-            onSelect={openDetails}
+          <GenreView 
+            genre={activeGenre} 
+            movies={activeGenre === 'watchlist' ? MOVIES.filter(m => watchlist.includes(m.id)) : MOVIES} 
+            onSelect={openDetails} 
             onBack={() => setActiveGenre(null)}
             watchlist={watchlist}
             onToggleWatchlist={toggleWatchlist}
           />
         ) : (
-          <MovieGrid
-            movies={MOVIES}
-            onSelect={openDetails}
-            onSeeAll={(genre) => setActiveGenre(genre)}
+          <MovieGrid 
+            movies={MOVIES} 
+            onSelect={openDetails} 
+            onSeeAll={(genre) => setActiveGenre(genre)} 
+            watchlist={watchlist}
+            onToggleWatchlist={toggleWatchlist}
           />
         )}
       </main>
 
-      {/* Search Modal */}
       <SearchModal
         movies={MOVIES}
         isOpen={isSearchOpen}
@@ -142,16 +150,6 @@ export default function App() {
         onSelect={openDetails}
       />
 
-      {/* Trailer Lightbox Modal */}
-      {trailerData && (
-        <TrailerModal
-          trailerUrl={trailerData.url}
-          title={trailerData.title}
-          onClose={() => setTrailerData(null)}
-        />
-      )}
-
-      {/* Movie Details Modal */}
       {selectedMovie && (
         <MovieDetails
           movie={selectedMovie}
@@ -161,15 +159,13 @@ export default function App() {
           onSelect={openDetails}
           watchlist={watchlist}
           onToggleWatchlist={toggleWatchlist}
-          onOpenTrailer={(url, title) => setTrailerData({ url, title })}
         />
       )}
 
-      {/* OGAds Native Unlock Sheet */}
       {unlockingMovie && (
         <UnlockSheet
           item={{ title: unlockingMovie.title, image: unlockingMovie.poster }}
-          onUnlocked={handleUnlockSuccess}
+          onComplete={handleUnlockComplete}
           onClose={closeUnlockSheet}
         />
       )}
