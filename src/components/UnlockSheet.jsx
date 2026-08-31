@@ -1,123 +1,126 @@
 import { useEffect, useState } from 'react';
 
-export default function UnlockSheet({ item, onUnlocked, onClose }) {
+export default function UnlockSheet({ item, onComplete, onClose }) {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [clickedOffer, setClickedOffer] = useState(false);
 
   useEffect(() => {
-    const handleKey = (e) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', handleKey);
+    if (!item) return;
+    const onKey = (e) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
 
-    // Fetch live OGAds offers from the Cloudflare Function
+    // Fetch offers via Cloudflare Pages serverless proxy
     fetch('/api/offers')
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.offers) {
+        if (data.success && Array.isArray(data.offers)) {
           setOffers(data.offers);
+        } else if (data.offers && Array.isArray(data.offers)) {
+          setOffers(data.offers);
+        } else {
+          setError(data.error || 'No current verification offers available.');
         }
-        setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
 
     return () => {
-      window.removeEventListener('keydown', handleKey);
+      window.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
     };
-  }, [onClose]);
+  }, [item, onClose]);
 
-  const handleOfferClick = (link) => {
-    window.open(link, '_blank');
-    // Start playback immediately when the user clicks an offer
-    setTimeout(() => {
-      onUnlocked();
-      onClose();
-    }, 1200);
-  };
+  if (!item) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
-
-      <div className="relative w-full max-w-md bg-[#121214] border-t sm:border border-white/10 rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl z-10 animate-in slide-in-from-bottom-6 duration-300">
+    <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center p-0 sm:p-4 animate-in fade-in duration-200">
+      <div className="fixed inset-0 bg-black/85 backdrop-blur-md" onClick={onClose} />
+      
+      <div className="relative w-full max-w-lg overflow-hidden rounded-t-3xl sm:rounded-2xl border border-white/10 bg-zinc-900/95 p-6 shadow-2xl backdrop-blur-xl">
         
-        {/* Header */}
-        <div className="flex items-start gap-4 pb-5 border-b border-white/10">
-          <img
-            src={item.image}
-            alt=""
-            className="h-20 w-14 rounded-lg object-cover bg-zinc-800 ring-1 ring-white/10 shrink-0"
-          />
-          <div>
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-              Stream Ready
-            </span>
-            <h3 className="text-base font-bold text-white leading-tight mt-1 line-clamp-1">
-              {item.title}
-            </h3>
-            <p className="text-xs text-zinc-400 mt-1">Complete 1 quick sponsor verification to unlock full HD stream.</p>
+        {/* Header Movie Meta */}
+        <div className="flex items-start gap-3 border-b border-white/10 pb-4">
+          <img src={item.image} alt="" className="h-16 w-12 shrink-0 rounded-lg object-cover bg-zinc-800 ring-1 ring-white/10" />
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-base font-bold text-white">{item.title}</h3>
+            <p className="mt-0.5 flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              Server Ready &bull; Fast HD Stream
+            </p>
           </div>
+          <button onClick={onClose} className="text-zinc-400 hover:text-white">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
         </div>
 
-        {/* Dynamic Offers List */}
-        <div className="py-4">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">
-            Choose an offer to continue:
-          </h4>
+        {/* Verification Copy */}
+        <div className="my-4">
+          <h4 className="text-sm font-bold text-white">Free Human Verification</h4>
+          <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+            Complete one quick sponsor task below to confirm you are not a bot and unlock immediate full-length playback.
+          </p>
+        </div>
 
+        {/* Dynamic Offers from OGAds API */}
+        <div className="space-y-2.5 max-h-[40vh] overflow-y-auto pr-1 [&::-webkit-scrollbar]:hidden">
           {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-14 rounded-xl bg-zinc-800/60 animate-pulse" />
-              ))}
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-14 rounded-xl bg-zinc-800/60 animate-pulse border border-white/5" />
+            ))
+          ) : error ? (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-center text-xs text-red-300">
+              {error}
             </div>
-          ) : offers.length > 0 ? (
-            <div className="space-y-2.5 max-h-60 overflow-y-auto [&::-webkit-scrollbar]:hidden">
-              {offers.map((offer) => (
-                <div
-                  key={offer.offerid || offer.name_short}
-                  onClick={() => handleOfferClick(offer.link)}
-                  className="flex items-center justify-between gap-3 p-3 rounded-xl bg-zinc-900 border border-white/5 hover:border-red-500/50 hover:bg-zinc-800/80 cursor-pointer transition active:scale-98 group"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    {offer.picture && (
-                      <img src={offer.picture} alt="" className="h-9 w-9 rounded-lg object-cover shrink-0" />
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-white group-hover:text-red-400 truncate">
-                        {offer.name_short}
-                      </p>
-                      <p className="text-[11px] text-zinc-400 truncate">{offer.adcopy}</p>
-                    </div>
-                  </div>
-                  <button className="shrink-0 text-xs font-bold text-white bg-red-600 px-3 py-1.5 rounded-lg shadow-sm">
-                    Free
-                  </button>
-                </div>
-              ))}
+          ) : offers.length === 0 ? (
+            <div className="py-6 text-center text-xs text-zinc-500">
+              No tasks available right now. Please try again in a few minutes.
             </div>
           ) : (
-            <div className="py-4 text-center">
-              <button
-                onClick={() => {
-                  onUnlocked();
-                  onClose();
-                }}
-                className="w-full py-3 rounded-xl bg-red-600 font-bold text-white hover:bg-red-500 transition"
+            offers.map((offer) => (
+              <a
+                key={offer.offer_id || offer.name}
+                href={offer.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setClickedOffer(true)}
+                className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:border-red-500/50 hover:bg-red-500/5 active:scale-[0.99]"
               >
-                Continue to Stream
-              </button>
-            </div>
+                <div className="flex items-center gap-3 min-w-0">
+                  {offer.picture && (
+                    <img src={offer.picture} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-white/10" />
+                  )}
+                  <div className="min-w-0">
+                    <h5 className="truncate text-xs font-bold text-zinc-100 group-hover:text-red-400">{offer.name_short || offer.name}</h5>
+                    <p className="truncate text-[11px] text-zinc-400">{offer.adcopy || 'Complete the step to unlock'}</p>
+                  </div>
+                </div>
+                <span className="shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white shadow group-hover:bg-red-500">
+                  Unlock &rarr;
+                </span>
+              </a>
+            ))
           )}
         </div>
 
-        <button
-          onClick={onClose}
-          className="w-full py-2 text-center text-xs font-semibold text-zinc-500 hover:text-zinc-300 transition"
-        >
-          Cancel
-        </button>
+        {/* Post-Click Verification Checker */}
+        {clickedOffer && (
+          <div className="mt-4 pt-3 border-t border-white/10 flex flex-col gap-2">
+            <button
+              onClick={onComplete}
+              className="w-full rounded-xl bg-emerald-600 py-3 text-xs font-bold text-white shadow-lg transition hover:bg-emerald-500 active:scale-95"
+            >
+              I Completed the Verification &bull; Start Movie
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
