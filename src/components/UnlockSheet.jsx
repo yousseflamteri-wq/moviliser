@@ -1,9 +1,20 @@
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Server, 
+  ShieldCheck, 
+  Zap, 
+  Play, 
+  X, 
+  RefreshCw, 
+  AlertCircle, 
+  CheckCircle2, 
+  Lock 
+} from 'lucide-react';
 
 export default function UnlockSheet({ item, onComplete, onClose }) {
-  const [step, setStep] = useState(1);
-  const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [offers, setOffers] = useState([]);
   const [error, setError] = useState(null);
   const [clickedOffer, setClickedOffer] = useState(false);
 
@@ -13,135 +24,192 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
     window.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
 
-    // Pre-fetch offers in the background while the user reads Step 1
-    fetch('/api/offers')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.offers)) {
-          setOffers(data.offers);
-        } else if (data.offers && Array.isArray(data.offers)) {
-          setOffers(data.offers);
-        } else {
-          setError(data.error || 'No current verification offers available.');
-        }
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    // Simulate CDN handshake + fetch actual offers
+    const timer = setTimeout(() => {
+      fetch('/api/offers')
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data.offers) && data.offers.length > 0) {
+            setOffers(data.offers);
+          } else {
+            setError(data.error || 'No active streaming mirrors available.');
+          }
+        })
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+    }, 700);
 
     return () => {
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
+      clearTimeout(timer);
     };
   }, [item, onClose]);
 
   if (!item) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="fixed inset-0 bg-black/85 backdrop-blur-md" onClick={onClose} />
-      
-      <div className="relative w-full max-w-md overflow-hidden rounded-t-3xl sm:rounded-2xl border border-white/10 bg-zinc-900/95 p-6 shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom-8">
-        
-        {/* Universal Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <img src={item.image} alt="" className="h-16 w-16 shrink-0 rounded-xl object-cover bg-zinc-800 ring-1 ring-white/10" />
-          <div className="min-w-0 flex-1">
-            <h3 className="truncate text-lg font-bold text-white">{item.title}</h3>
-            <p className="mt-0.5 text-xs text-zinc-400">
-              4K HDR • High Quality Stream
+    <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center p-0 sm:p-4">
+      {/* Background Dimmer */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 bg-black/85 backdrop-blur-md"
+      />
+
+      {/* Main Glass Modal */}
+      <motion.div
+        initial={{ opacity: 0, y: 25, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 25, scale: 0.96 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full max-w-lg overflow-hidden rounded-t-[2rem] sm:rounded-2xl border border-white/10 bg-[#0e121a]/95 p-6 shadow-2xl shadow-black/80 backdrop-blur-2xl"
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-zinc-400 transition hover:bg-white/10 hover:text-white"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* Header with Movie Context */}
+        <div className="flex items-center gap-4 border-b border-white/[0.08] pb-5">
+          <img
+            src={item.image}
+            alt=""
+            className="h-16 w-12 shrink-0 rounded-lg object-cover ring-1 ring-white/15 shadow-lg"
+          />
+          <div className="min-w-0 flex-1 pr-6">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                CDN Server Ready
+              </span>
+            </div>
+            <h3 className="truncate text-base font-bold text-white mt-0.5">
+              {item.title}
+            </h3>
+            <p className="text-xs text-zinc-400">
+              4K Ultra HD • Adaptive Bitrate
             </p>
           </div>
-          {step === 2 && (
-            <button onClick={onClose} className="text-zinc-400 hover:text-white shrink-0 p-1 transition">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-                <path d="M6 6l12 12M18 6L6 18" />
-              </svg>
-            </button>
-          )}
         </div>
 
-        {step === 1 ? (
-          /* STEP 1: The Intro Prompt */
-          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-            <p className="text-[15px] leading-relaxed text-zinc-300 mb-6">
-              To stream <span className="font-bold text-white">{item.title}</span> in High Quality, please complete one quick offer from our partners. It's what keeps the library free.
-            </p>
-            <button
-              onClick={() => setStep(2)}
-              className="w-full rounded-full bg-red-600 py-3.5 text-sm font-bold text-white shadow-lg transition hover:bg-red-500 active:scale-95"
-            >
-              Continue
-            </button>
-            <button
-              onClick={onClose}
-              className="mt-3 w-full py-2.5 text-sm font-medium text-zinc-500 hover:text-zinc-300 transition"
-            >
-              Maybe later
-            </button>
-          </div>
-        ) : (
-          /* STEP 2: The Offer Wall */
-          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="mb-4 border-t border-white/10 pt-4">
-              <h4 className="text-sm font-bold text-white">Select an offer to continue</h4>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-400">
-                Playback will begin immediately after successful completion.
-              </p>
+        {/* Body Content */}
+        <div className="py-4">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
+              <RefreshCw className="h-7 w-7 animate-spin text-red-500" />
+              <div>
+                <p className="text-sm font-semibold text-zinc-200">
+                  Allocating High-Speed Buffer...
+                </p>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  Connecting to nearest low-latency streaming edge
+                </p>
+              </div>
             </div>
+          ) : error ? (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-center">
+              <AlertCircle className="mx-auto h-6 w-6 text-red-400 mb-2" />
+              <p className="text-xs text-red-200">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-3 rounded-lg bg-red-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500"
+              >
+                Retry Connection
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between px-1 mb-1">
+                <span className="text-xs font-medium text-zinc-400 flex items-center gap-1.5">
+                  <Server className="h-3.5 w-3.5 text-red-500" /> Available Fast Mirrors
+                </span>
+                <span className="text-[11px] font-medium text-emerald-400">100% Free</span>
+              </div>
 
-            <div className="space-y-2.5 max-h-[45vh] overflow-y-auto pr-1 [&::-webkit-scrollbar]:hidden">
-              {loading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-14 rounded-xl bg-zinc-800/60 animate-pulse border border-white/5" />
-                ))
-              ) : error ? (
-                <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-center text-xs text-red-300">
-                  {error}
-                </div>
-              ) : offers.length === 0 ? (
-                <div className="py-6 text-center text-xs text-zinc-500">
-                  No tasks available right now. Please try again in a few minutes.
-                </div>
-              ) : (
-                offers.map((offer) => (
-                  <a
-                    key={offer.offer_id || offer.name}
+              <div className="space-y-2 max-h-[42vh] overflow-y-auto pr-1 no-scrollbar">
+                {offers.map((offer, idx) => (
+                  <motion.a
+                    key={offer.offer_id || idx}
                     href={offer.link}
                     target="_blank"
                     rel="noopener noreferrer"
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
                     onClick={() => setClickedOffer(true)}
-                    className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:border-red-500/50 hover:bg-red-500/5 active:scale-[0.99]"
+                    className="group flex items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-3 transition-all hover:border-red-500/40 hover:bg-white/[0.06] hover:shadow-lg hover:shadow-red-600/10"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      {offer.picture && (
-                        <img src={offer.picture} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-white/10" />
-                      )}
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-600/10 border border-red-500/20 text-red-400 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                        <Zap className="h-4 w-4" />
+                      </div>
                       <div className="min-w-0">
-                        <h5 className="truncate text-xs font-bold text-zinc-100 group-hover:text-red-400">{offer.name_short || offer.name}</h5>
-                        <p className="truncate text-[11px] text-zinc-400">{offer.adcopy || 'Complete the step to unlock'}</p>
+                        <h4 className="truncate text-xs font-bold text-zinc-100 group-hover:text-white">
+                          {offer.name_short || offer.name || `Mirror Server #${idx + 1}`}
+                        </h4>
+                        <p className="truncate text-[11px] text-zinc-400">
+                          {offer.adcopy || 'Verify once to launch 4K stream'}
+                        </p>
                       </div>
                     </div>
-                    <span className="shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white shadow group-hover:bg-red-500">
-                      Unlock &rarr;
-                    </span>
-                  </a>
-                ))
-              )}
-            </div>
 
-            {clickedOffer && (
-              <div className="mt-4 pt-3 border-t border-white/10 flex flex-col gap-2">
-                <button
-                  onClick={onComplete}
-                  className="w-full rounded-full bg-emerald-600 py-3.5 text-sm font-bold text-white shadow-lg transition hover:bg-emerald-500 active:scale-95"
-                >
-                  I Completed the Offer &bull; Start Movie
-                </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="rounded bg-white/5 px-2 py-1 text-[10px] font-semibold text-zinc-400 group-hover:text-white">
+                        Connect
+                      </span>
+                      <Play className="h-3.5 w-3.5 fill-current text-zinc-400 group-hover:text-red-400 transition-colors" />
+                    </div>
+                  </motion.a>
+                ))}
               </div>
-            )}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+
+        {/* Post-Click Verification Card */}
+        <AnimatePresence>
+          {clickedOffer && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3.5"
+            >
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <h5 className="text-xs font-bold text-emerald-300">
+                    Awaiting Connection Finalization
+                  </h5>
+                  <p className="text-[11px] text-zinc-300 mt-0.5 leading-relaxed">
+                    Complete the brief step in your new tab. Once completed, click below to initialize streaming.
+                  </p>
+                  <button
+                    onClick={onComplete}
+                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-xs font-bold text-black shadow-lg transition hover:bg-emerald-400 active:scale-95"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    Launch Movie Player
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Footer */}
+        <div className="mt-4 flex items-center justify-between border-t border-white/[0.06] pt-3 text-[11px] text-zinc-500">
+          <span className="flex items-center gap-1">
+            <Lock className="h-3 w-3 text-zinc-400" /> SSL Stream Encryption
+          </span>
+          <span>Fast Edge Routing</span>
+        </div>
+      </motion.div>
     </div>
   );
 }
