@@ -4,35 +4,39 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
   const heroMovies = movies.slice(0, 5);
   const [heroIdx, setHeroIdx] = useState(0);
   const [loadedImages, setLoadedImages] = useState({});
+  const carouselRef = useRef(null);
   const rowRefs = useRef({});
-  const touchStartX = useRef(null);
 
-  // Auto-slide every 5 seconds
+  // Sync scroll position with dots
+  const handleScroll = () => {
+    if (!carouselRef.current) return;
+    const width = carouselRef.current.offsetWidth;
+    const scrollLeft = carouselRef.current.scrollLeft;
+    const newIdx = Math.round(scrollLeft / width);
+    if (newIdx !== heroIdx && newIdx >= 0 && newIdx < heroMovies.length) {
+      setHeroIdx(newIdx);
+    }
+  };
+
+  // Click dot to jump smoothly to that movie
+  const scrollToIndex = (index) => {
+    if (!carouselRef.current) return;
+    carouselRef.current.scrollTo({
+      left: index * carouselRef.current.offsetWidth,
+      behavior: 'smooth',
+    });
+    setHeroIdx(index);
+  };
+
+  // Optional: Auto slide every 6 seconds
   useEffect(() => {
     if (heroMovies.length <= 1) return;
     const timer = setInterval(() => {
-      setHeroIdx((prev) => (prev + 1) % heroMovies.length);
-    }, 5000);
+      const nextIdx = (heroIdx + 1) % heroMovies.length;
+      scrollToIndex(nextIdx);
+    }, 6000);
     return () => clearInterval(timer);
-  }, [heroMovies.length]);
-
-  // Touch handlers for mobile swipe
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (e) => {
-    if (touchStartX.current === null) return;
-    const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (diff > 45) {
-      // Swiped left -> next
-      setHeroIdx((prev) => (prev + 1) % heroMovies.length);
-    } else if (diff < -45) {
-      // Swiped right -> prev
-      setHeroIdx((prev) => (prev - 1 + heroMovies.length) % heroMovies.length);
-    }
-    touchStartX.current = null;
-  };
+  }, [heroIdx, heroMovies.length]);
 
   const scrollRow = (genre, direction) => {
     const el = rowRefs.current[genre];
@@ -60,22 +64,20 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
   return (
     <div className="flex flex-col gap-8 pb-16 overflow-x-hidden pt-14 bg-[#09090b]">
 
-      {/* Sliding Hero Carousel */}
+      {/* Modern Cineby Snap Hero */}
       {heroMovies.length > 0 && (
-        <div 
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          className="relative w-full h-[520px] sm:h-[600px] overflow-hidden select-none"
-        >
-          {/* Slides Track */}
-          <div 
-            className="flex h-full w-full transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] will-change-transform"
-            style={{ transform: `translateX(-${heroIdx * 100}%)` }}
+        <div className="relative w-full overflow-hidden">
+          {/* Scroll Snap Carousel Track */}
+          <div
+            ref={carouselRef}
+            onScroll={handleScroll}
+            className="flex w-full h-[520px] sm:h-[600px] overflow-x-auto snap-x snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {heroMovies.map((movie) => (
-              <div 
-                key={movie.id} 
-                className="relative min-w-full h-full shrink-0 flex items-end"
+              <div
+                key={movie.id}
+                className="relative w-full flex-[0_0_100%] snap-start snap-always h-full flex items-end overflow-hidden"
               >
                 {/* Backdrop Image */}
                 <img
@@ -85,11 +87,11 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
                 />
 
                 {/* Overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/70 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/75 to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#09090b] via-[#09090b]/80 to-transparent sm:w-2/3" />
 
                 {/* Content */}
-                <div className="relative z-10 mx-auto w-full max-w-7xl px-5 sm:px-8 pb-12">
+                <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 pb-12">
                   <div className="max-w-xl flex flex-col items-start gap-3">
                     <div className="flex items-center gap-2">
                       <span className="rounded bg-red-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
@@ -109,7 +111,7 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
                       {movie.overview || movie.synopsis || `Stream ${movie.title} in HD quality with adaptive fast edge routing.`}
                     </p>
 
-                    {/* Buttons */}
+                    {/* CTA Buttons */}
                     <div className="flex items-center gap-3 pt-2">
                       <button
                         onClick={() => onSelect(movie)}
@@ -125,11 +127,11 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
                         onClick={() => onToggleWatchlist(movie.id)}
                         className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95"
                       >
-                        <svg 
-                          viewBox="0 0 24 24" 
-                          fill={watchlist?.includes(movie.id) ? "currentColor" : "none"} 
-                          stroke="currentColor" 
-                          strokeWidth="2" 
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill={watchlist?.includes(movie.id) ? "currentColor" : "none"}
+                          stroke="currentColor"
+                          strokeWidth="2"
                           className="h-4 w-4"
                         >
                           <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
@@ -143,12 +145,12 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
             ))}
           </div>
 
-          {/* Indicator Dots */}
-          <div className="absolute bottom-5 left-5 sm:left-8 z-20 flex items-center gap-1.5">
+          {/* Clean Indicator Dots */}
+          <div className="absolute bottom-4 left-5 sm:left-8 z-20 flex items-center gap-1.5">
             {heroMovies.map((_, i) => (
               <button
                 key={i}
-                onClick={() => setHeroIdx(i)}
+                onClick={() => scrollToIndex(i)}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
                   i === heroIdx ? 'w-6 bg-red-600' : 'w-2 bg-white/30 hover:bg-white/50'
                 }`}
@@ -190,7 +192,7 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
               </button>
             </div>
 
-            {/* Navigation Arrows */}
+            {/* Row Navigation Arrows */}
             <button
               onClick={() => scrollRow(genre, 'left')}
               className="absolute left-0 top-1/2 z-20 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white backdrop-blur-md border border-white/10 opacity-0 transition group-hover/row:opacity-100 hover:bg-red-600 -ml-3"
