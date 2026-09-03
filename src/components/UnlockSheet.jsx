@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
 
 export default function UnlockSheet({ item, onComplete, onClose }) {
+  // 0: Fetching, 1: Selecting best server, 2: Done & Ready
+  const [phase, setPhase] = useState(0);
   const [showOffers, setShowOffers] = useState(false);
   const [offers, setOffers] = useState([]);
-  const [loadingOffers, setLoadingOffers] = useState(false);
   const [error, setError] = useState(null);
-  const [clickedOffer, setClickedOffer] = useState(false);
+
+  // Verification security timer
+  const [verifying, setVerifying] = useState(false);
+  const [countdown, setCountdown] = useState(45);
+  const [verifyFailed, setVerifyFailed] = useState(false);
 
   useEffect(() => {
     if (!item) return;
@@ -13,8 +18,17 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
     window.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
 
+    // Step 1: Fetching servers (0 to 1.4s)
+    const t1 = setTimeout(() => {
+      setPhase(1); // Step 2: Selecting fastest server (1.4s to 2.8s)
+    }, 1400);
+
+    // Step 3: Complete handshake at 2.8s
+    const t2 = setTimeout(() => {
+      setPhase(2);
+    }, 2800);
+
     // Pre-fetch the 3 offers quietly in the background
-    setLoadingOffers(true);
     fetch('/api/offers')
       .then((res) => res.json())
       .then((data) => {
@@ -25,14 +39,40 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
           setError(data.error || 'No active streaming servers found.');
         }
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoadingOffers(false));
+      .catch((err) => setError(err.message));
 
     return () => {
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
+      clearTimeout(t1);
+      clearTimeout(t2);
     };
   }, [item, onClose]);
+
+  // 45-second timer when an offer is opened
+  useEffect(() => {
+    let timer;
+    if (verifying && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [verifying, countdown]);
+
+  const handleOfferClick = () => {
+    setVerifying(true);
+    setCountdown(45);
+    setVerifyFailed(false);
+  };
+
+  const handleCheckVerification = () => {
+    if (countdown > 5) {
+      setVerifyFailed(true);
+      return;
+    }
+    onComplete();
+  };
 
   if (!item) return null;
 
@@ -57,46 +97,75 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
           </svg>
         </button>
 
-        {/* 1. CLEAN VIDEO PLAYER (ONLY PLAY BUTTON) */}
+        {/* 1. REALISTIC VIDEO PLAYER */}
         <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black border border-white/10 shadow-inner flex flex-col justify-between">
           
-          {/* Backdrop Thumbnail */}
+          {/* Backdrop Blur Poster */}
           <img 
             src={item.image} 
             alt="" 
-            className="absolute inset-0 w-full h-full object-cover opacity-40 blur-[1px] scale-105"
+            className="absolute inset-0 w-full h-full object-cover opacity-35 blur-[1.5px] scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/60" />
 
-          {/* Top Video Header */}
+          {/* Top Header */}
           <div className="relative z-10 flex items-center justify-between p-3.5">
             <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-red-600 animate-pulse" />
+              <span className={`flex h-2 w-2 rounded-full ${phase === 2 ? 'bg-emerald-500 animate-pulse' : 'bg-red-500 animate-ping'}`} />
               <span className="text-xs font-bold text-white tracking-wide truncate max-w-[240px]">
                 {item.title}
               </span>
             </div>
-            <span className="rounded bg-red-600/80 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+            <span className="rounded bg-red-600/90 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow">
               1080p HD
             </span>
           </div>
 
-          {/* Center Play Button Only */}
-          <div className="relative z-10 flex items-center justify-center">
-            <button
-              onClick={() => setShowOffers(true)}
-              className="group flex h-16 w-16 items-center justify-center rounded-full bg-red-600 text-white shadow-2xl shadow-red-600/60 ring-4 ring-red-500/20 transition-all duration-300 hover:scale-110 hover:bg-red-500 active:scale-95"
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 ml-1">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </button>
+          {/* Center Content: Sequential Server Handshake -> Real Play Button */}
+          <div className="relative z-10 flex flex-col items-center justify-center text-center px-4">
+            {phase === 0 && (
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-10 w-10 animate-spin rounded-full border-2 border-red-500/20 border-t-red-500" />
+                <p className="text-xs font-semibold text-zinc-300 tracking-wide animate-pulse">
+                  Fetching streaming servers...
+                </p>
+              </div>
+            )}
+
+            {phase === 1 && (
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-10 w-10 animate-spin rounded-full border-2 border-emerald-500/20 border-t-emerald-500" />
+                <p className="text-xs font-semibold text-emerald-400 tracking-wide animate-pulse">
+                  Selecting the fastest server node...
+                </p>
+              </div>
+            )}
+
+            {phase === 2 && (
+              <button
+                onClick={() => setShowOffers(true)}
+                className="group relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-tr from-red-700 via-red-600 to-red-500 text-white shadow-2xl shadow-red-600/60 ring-4 ring-white/10 transition-all duration-300 hover:scale-110 hover:shadow-red-600/80 active:scale-95"
+              >
+                {/* Realistic Play Button Inner Ring & Glow */}
+                <div className="absolute inset-0 rounded-full bg-white/10 opacity-0 transition-opacity group-hover:opacity-100" />
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="h-9 w-9 ml-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] transition-transform group-hover:scale-105"
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </button>
+            )}
           </div>
 
-          {/* Bottom Progress Bar */}
+          {/* Bottom Video Progress Bar */}
           <div className="relative z-10 p-3 bg-gradient-to-t from-black via-black/80 to-transparent">
             <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden mb-2">
-              <div className="h-full bg-red-600 w-full" />
+              <div 
+                className="h-full bg-red-600 transition-all duration-700 ease-out" 
+                style={{ width: phase === 0 ? '25%' : phase === 1 ? '70%' : '100%' }}
+              />
             </div>
             <div className="flex items-center justify-between text-[11px] text-zinc-400">
               <div className="flex items-center gap-3">
@@ -105,18 +174,30 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
                 </svg>
                 <span>00:00 / 02:14:30</span>
               </div>
-              <span className="text-emerald-400 font-medium flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Fast CDN Node
+              <span className="text-zinc-400 font-medium flex items-center gap-1.5">
+                {phase < 2 ? (
+                  <span>Initializing Stream...</span>
+                ) : (
+                  <span className="text-emerald-400 flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Edge Node 1 (Ready)
+                  </span>
+                )}
               </span>
             </div>
           </div>
         </div>
 
-        {/* 2. HIGH TRAFFIC NOTICE & FLOW */}
+        {/* 2. LOWER SECTION: SYNCHRONIZED REVEAL */}
         <div className="mt-5">
-          {!showOffers ? (
-            /* Pre-Offer Prompt */
-            <div className="flex flex-col items-center text-center p-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
+          {/* While servers are fetching/selecting, show matching synchronized loading bar */}
+          {phase < 2 ? (
+            <div className="flex items-center justify-center gap-2.5 p-4 rounded-xl border border-white/5 bg-white/[0.02] text-zinc-500 text-xs font-medium">
+              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-300" />
+              <span>Checking network routes & server capacity...</span>
+            </div>
+          ) : !showOffers ? (
+            /* High Server Load Notice & Continue Button appear together with the Start Button */
+            <div className="flex flex-col items-center text-center p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 transition-all duration-500">
               <div className="flex items-center gap-2 mb-2 text-amber-400">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0">
                   <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -130,7 +211,7 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
 
               <button
                 onClick={() => setShowOffers(true)}
-                className="mt-4 flex w-full max-w-sm items-center justify-center gap-2 rounded-xl bg-red-600 py-3 text-sm font-bold text-white shadow-xl shadow-red-600/30 transition hover:bg-red-500 active:scale-95"
+                className="mt-4 flex w-full max-w-sm items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-red-500 py-3 text-sm font-bold text-white shadow-xl shadow-red-600/30 transition hover:brightness-110 active:scale-95"
               >
                 <span>Continue to Verification</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4">
@@ -139,7 +220,7 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
               </button>
             </div>
           ) : (
-            /* Step 2: Exactly 3 Server Offers Appear */
+            /* Step 2: The 3 Server Offers */
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between px-1 mb-0.5">
                 <span className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
@@ -148,11 +229,7 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
                 <span className="text-[11px] text-emerald-400 font-medium">Free Access</span>
               </div>
 
-              {loadingOffers ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-14 rounded-xl bg-zinc-800/50 animate-pulse border border-white/5" />
-                ))
-              ) : error ? (
+              {error ? (
                 <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-center text-xs text-red-300">
                   {error}
                 </div>
@@ -163,7 +240,7 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
                     href={offer.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => setClickedOffer(true)}
+                    onClick={handleOfferClick}
                     className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3 transition-all hover:border-red-500/50 hover:bg-white/[0.08] active:scale-[0.99]"
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -197,20 +274,44 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
           )}
         </div>
 
-        {/* Post-Click Confirmation Button */}
-        {clickedOffer && (
-          <div className="mt-3.5 rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-3.5">
-            <p className="text-xs text-zinc-200">
-              Complete the verification in the opened tab. Click below once finished:
-            </p>
+        {/* 3. VERIFICATION TIMER BUFFER */}
+        {verifying && (
+          <div className="mt-3.5 rounded-xl border border-white/10 bg-zinc-900/95 p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-red-500/20 border-t-red-500 shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs font-bold text-white">
+                  Awaiting Offer Completion...
+                </p>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  Complete the steps in your opened window to unlock full 1080p stream.
+                </p>
+              </div>
+              <span className="font-mono text-xs font-semibold text-red-400 bg-red-500/10 px-2 py-1 rounded">
+                {countdown > 0 ? `${countdown}s` : 'Ready'}
+              </span>
+            </div>
+
+            {verifyFailed && (
+              <div className="mt-2.5 flex items-center gap-2 rounded-lg bg-red-500/10 p-2.5 text-[11px] text-red-300 border border-red-500/20">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0 text-red-400">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <span>Step not completed yet. Please finish the instructions in the opened window.</span>
+              </div>
+            )}
+
             <button
-              onClick={onComplete}
-              className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-xs font-bold text-black shadow-lg transition hover:bg-emerald-400 active:scale-95"
+              onClick={handleCheckVerification}
+              className={`mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition active:scale-95 ${
+                countdown <= 5
+                  ? 'bg-emerald-500 text-black hover:bg-emerald-400 shadow-lg'
+                  : 'bg-zinc-800 text-zinc-400 cursor-not-allowed'
+              }`}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              I Completed Verification • Play Movie
+              {countdown > 5 ? `Verifying Task... (${countdown}s)` : 'Check Completion & Start Movie'}
             </button>
           </div>
         )}
