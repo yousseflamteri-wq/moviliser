@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 export default function UnlockSheet({ item, onComplete, onClose }) {
-  // 0: Fetching, 1: Selecting best server, 2: Done & Ready
+  // 0: Connecting CDN, 1: Fetching servers, 2: Selecting fastest, 3: Done & Ready
   const [phase, setPhase] = useState(0);
   const [showOffers, setShowOffers] = useState(false);
   const [offers, setOffers] = useState([]);
@@ -13,15 +13,20 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
     window.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
 
-    // Step 1: Fetching servers (0 to 1.4s)
+    // Step 1: Connecting to CDN (0s - 1.8s)
     const t1 = setTimeout(() => {
-      setPhase(1); // Step 2: Selecting fastest server (1.4s to 2.8s)
-    }, 1400);
+      setPhase(1); // Step 2: Fetching streaming servers (1.8s - 3.6s)
+    }, 1800);
 
-    // Step 3: Complete handshake at 2.8s
+    // Step 2: Selecting fastest node (3.6s - 5.5s)
     const t2 = setTimeout(() => {
       setPhase(2);
-    }, 2800);
+    }, 3600);
+
+    // Step 3: Done & show continue (5.5s+)
+    const t3 = setTimeout(() => {
+      setPhase(3);
+    }, 5500);
 
     // Pre-fetch the 3 offers quietly in the background
     fetch('/api/offers')
@@ -41,6 +46,7 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
       document.body.style.overflow = '';
       clearTimeout(t1);
       clearTimeout(t2);
+      clearTimeout(t3);
     };
   }, [item, onClose]);
 
@@ -67,7 +73,7 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
           </svg>
         </button>
 
-        {/* 1. CLEAN VIDEO PLAYER */}
+        {/* 1. CLEAN VIDEO PLAYER (RED LINE REMOVED) */}
         <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black border border-white/10 shadow-inner flex flex-col justify-between">
           
           {/* Backdrop Poster */}
@@ -81,7 +87,7 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
           {/* Top Header */}
           <div className="relative z-10 flex items-center justify-between p-3.5">
             <div className="flex items-center gap-2">
-              <span className={`flex h-2 w-2 rounded-full ${phase === 2 ? 'bg-emerald-500 animate-pulse' : 'bg-red-500 animate-ping'}`} />
+              <span className={`flex h-2 w-2 rounded-full ${phase === 3 ? 'bg-emerald-500 animate-pulse' : 'bg-red-500 animate-ping'}`} />
               <span className="text-xs font-bold text-white tracking-wide truncate max-w-[240px]">
                 {item.title}
               </span>
@@ -91,35 +97,51 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
             </span>
           </div>
 
-          {/* Center Content: Server Connection Messages */}
+          {/* Center Content: Long Server Handshake with White Text */}
           <div className="relative z-10 flex flex-col items-center justify-center text-center px-4">
             {phase === 0 && (
               <div className="flex flex-col items-center gap-3">
                 <div className="h-10 w-10 animate-spin rounded-full border-2 border-red-500/20 border-t-red-500" />
-                <p className="text-xs font-semibold text-zinc-300 tracking-wide animate-pulse">
-                  Fetching streaming servers...
+                <p className="text-xs sm:text-sm font-semibold text-white tracking-wide drop-shadow-md">
+                  Connecting to primary CDN gateway...
                 </p>
               </div>
             )}
 
             {phase === 1 && (
               <div className="flex flex-col items-center gap-3">
+                <div className="h-10 w-10 animate-spin rounded-full border-2 border-red-500/20 border-t-red-500" />
+                <p className="text-xs sm:text-sm font-semibold text-white tracking-wide drop-shadow-md">
+                  Fetching streaming servers...
+                </p>
+              </div>
+            )}
+
+            {phase === 2 && (
+              <div className="flex flex-col items-center gap-3">
                 <div className="h-10 w-10 animate-spin rounded-full border-2 border-emerald-500/20 border-t-emerald-500" />
-                <p className="text-xs font-semibold text-emerald-400 tracking-wide animate-pulse">
-                  Selecting the fastest server node...
+                <p className="text-xs sm:text-sm font-semibold text-white tracking-wide drop-shadow-md">
+                  Selecting fastest 1080p node...
+                </p>
+              </div>
+            )}
+
+            {phase === 3 && (
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-6 w-6">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+                <p className="text-xs sm:text-sm font-bold text-white drop-shadow-md">
+                  Streaming Node Allocated
                 </p>
               </div>
             )}
           </div>
 
-          {/* Bottom Video Progress Bar */}
+          {/* Bottom Player Footer (Red Line Scrub Removed) */}
           <div className="relative z-10 p-3 bg-gradient-to-t from-black via-black/80 to-transparent">
-            <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden mb-2">
-              <div 
-                className="h-full bg-red-600 transition-all duration-700 ease-out" 
-                style={{ width: phase === 0 ? '25%' : phase === 1 ? '70%' : '100%' }}
-              />
-            </div>
             <div className="flex items-center justify-between text-[11px] text-zinc-400">
               <div className="flex items-center gap-3">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5 text-zinc-300">
@@ -128,7 +150,7 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
                 <span>00:00 / 02:14:30</span>
               </div>
               <span className="text-zinc-400 font-medium flex items-center gap-1.5">
-                {phase < 2 ? (
+                {phase < 3 ? (
                   <span>Initializing Stream...</span>
                 ) : (
                   <span className="text-emerald-400 flex items-center gap-1">
@@ -142,20 +164,20 @@ export default function UnlockSheet({ item, onComplete, onClose }) {
 
         {/* 2. LOWER SECTION: NOTICE & SMALL CONTINUE BUTTON */}
         <div className="mt-4">
-          {phase < 2 ? (
-            <div className="flex items-center justify-center gap-2.5 p-3 rounded-xl border border-white/5 bg-white/[0.02] text-zinc-500 text-xs font-medium">
-              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-300" />
-              <span>Checking network routes & server capacity...</span>
+          {phase < 3 ? (
+            <div className="flex items-center justify-center gap-2.5 p-3.5 rounded-xl border border-white/5 bg-white/[0.02] text-white text-xs font-medium">
+              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              <span className="text-white">Checking network routes & server capacity...</span>
             </div>
           ) : !showOffers ? (
-            <div className="flex flex-col items-center text-center p-3 rounded-xl border border-white/5 bg-white/[0.02] transition-all duration-300">
+            <div className="flex flex-col items-center text-center p-3.5 rounded-xl border border-white/5 bg-white/[0.02] transition-all duration-300">
               <p className="text-xs sm:text-[13px] text-zinc-300 leading-relaxed max-w-md mb-3">
                 Due to high traffic, please complete a quick server verification to unlock continuous high-speed streaming.
               </p>
 
               <button
                 onClick={() => setShowOffers(true)}
-                className="rounded-lg bg-red-600 px-5 py-2 text-xs font-semibold text-white shadow-md shadow-red-600/20 transition hover:bg-red-500 active:scale-95"
+                className="rounded-lg bg-red-600 px-6 py-2 text-xs font-semibold text-white shadow-md shadow-red-600/20 transition hover:bg-red-500 active:scale-95"
               >
                 Continue
               </button>
