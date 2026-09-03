@@ -1,10 +1,38 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist = [], onToggleWatchlist }) {
   const heroMovies = movies.slice(0, 5);
   const [heroIdx, setHeroIdx] = useState(0);
   const [loadedImages, setLoadedImages] = useState({});
   const rowRefs = useRef({});
+  const touchStartX = useRef(null);
+
+  // Auto-slide every 5 seconds
+  useEffect(() => {
+    if (heroMovies.length <= 1) return;
+    const timer = setInterval(() => {
+      setHeroIdx((prev) => (prev + 1) % heroMovies.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [heroMovies.length]);
+
+  // Touch handlers for mobile swipe
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (diff > 45) {
+      // Swiped left -> next
+      setHeroIdx((prev) => (prev + 1) % heroMovies.length);
+    } else if (diff < -45) {
+      // Swiped right -> prev
+      setHeroIdx((prev) => (prev - 1 + heroMovies.length) % heroMovies.length);
+    }
+    touchStartX.current = null;
+  };
 
   const scrollRow = (genre, direction) => {
     const el = rowRefs.current[genre];
@@ -29,91 +57,103 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
 
   if (!movies.length) return null;
 
-  const currentHero = heroMovies[heroIdx] || heroMovies[0];
-
   return (
-    <div className="flex flex-col gap-10 pb-16 overflow-x-hidden pt-16 bg-[#09090b]">
+    <div className="flex flex-col gap-8 pb-16 overflow-x-hidden pt-14 bg-[#09090b]">
 
-      {/* Cinematic Hero Spotlight (Cineby / FluxTV Style) */}
-      {currentHero && (
-        <div className="relative w-full h-[480px] sm:h-[580px] overflow-hidden flex items-end">
-          {/* Backdrop Image */}
-          <div className="absolute inset-0 transition-opacity duration-700">
-            <img
-              key={currentHero.id}
-              src={currentHero.backdrop || currentHero.poster}
-              alt={currentHero.title}
-              className="w-full h-full object-cover object-top transition-transform duration-1000 ease-out scale-100"
-            />
+      {/* Sliding Hero Carousel */}
+      {heroMovies.length > 0 && (
+        <div 
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          className="relative w-full h-[520px] sm:h-[600px] overflow-hidden select-none"
+        >
+          {/* Slides Track */}
+          <div 
+            className="flex h-full w-full transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] will-change-transform"
+            style={{ transform: `translateX(-${heroIdx * 100}%)` }}
+          >
+            {heroMovies.map((movie) => (
+              <div 
+                key={movie.id} 
+                className="relative min-w-full h-full shrink-0 flex items-end"
+              >
+                {/* Backdrop Image */}
+                <img
+                  src={movie.backdrop || movie.poster}
+                  alt={movie.title}
+                  className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
+                />
+
+                {/* Overlays */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/70 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#09090b] via-[#09090b]/80 to-transparent sm:w-2/3" />
+
+                {/* Content */}
+                <div className="relative z-10 mx-auto w-full max-w-7xl px-5 sm:px-8 pb-12">
+                  <div className="max-w-xl flex flex-col items-start gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded bg-red-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                        Featured
+                      </span>
+                      <span className="flex items-center gap-1 rounded bg-black/50 px-2 py-0.5 text-[11px] font-semibold text-yellow-400 backdrop-blur-md border border-white/10">
+                        ★ {movie.rating || '8.8'}
+                      </span>
+                      <span className="text-xs text-zinc-400">{movie.year || '2024'}</span>
+                    </div>
+
+                    <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                      {movie.title}
+                    </h1>
+
+                    <p className="text-xs sm:text-sm text-zinc-300 line-clamp-2 max-w-lg leading-relaxed">
+                      {movie.overview || movie.synopsis || `Stream ${movie.title} in HD quality with adaptive fast edge routing.`}
+                    </p>
+
+                    {/* Buttons */}
+                    <div className="flex items-center gap-3 pt-2">
+                      <button
+                        onClick={() => onSelect(movie)}
+                        className="flex items-center gap-2 rounded-xl bg-red-600 px-6 py-3 text-sm font-bold text-white shadow-xl shadow-red-600/30 transition hover:bg-red-500 active:scale-95"
+                      >
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                        Watch Now
+                      </button>
+
+                      <button
+                        onClick={() => onToggleWatchlist(movie.id)}
+                        className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95"
+                      >
+                        <svg 
+                          viewBox="0 0 24 24" 
+                          fill={watchlist?.includes(movie.id) ? "currentColor" : "none"} 
+                          stroke="currentColor" 
+                          strokeWidth="2" 
+                          className="h-4 w-4"
+                        >
+                          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                        </svg>
+                        Watchlist
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Dual Gradient Overlays for Readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/70 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#09090b] via-[#09090b]/80 to-transparent sm:w-2/3" />
-
-          {/* Hero Meta & CTAs */}
-          <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-8 pb-10">
-            <div className="max-w-xl flex flex-col items-start gap-3">
-              <div className="flex items-center gap-2">
-                <span className="rounded bg-red-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
-                  Featured
-                </span>
-                <span className="flex items-center gap-1 rounded bg-black/50 px-2 py-0.5 text-[11px] font-semibold text-yellow-400 backdrop-blur-md border border-white/10">
-                  ★ {currentHero.rating || '8.8'}
-                </span>
-                <span className="text-xs text-zinc-400">{currentHero.year || '2024'}</span>
-              </div>
-
-              <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-                {currentHero.title}
-              </h1>
-
-              <p className="text-xs sm:text-sm text-zinc-300 line-clamp-2 max-w-lg leading-relaxed">
-                {currentHero.overview || currentHero.synopsis || `Stream ${currentHero.title} in HD quality with adaptive fast edge routing.`}
-              </p>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  onClick={() => onSelect(currentHero)}
-                  className="flex items-center gap-2 rounded-xl bg-red-600 px-6 py-3 text-sm font-bold text-white shadow-xl shadow-red-600/30 transition hover:bg-red-500 active:scale-95"
-                >
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                  Watch Now
-                </button>
-
-                <button
-                  onClick={() => onToggleWatchlist(currentHero.id)}
-                  className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95"
-                >
-                  <svg 
-                    viewBox="0 0 24 24" 
-                    fill={watchlist?.includes(currentHero.id) ? "currentColor" : "none"} 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    className="h-4 w-4"
-                  >
-                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                  </svg>
-                  Watchlist
-                </button>
-              </div>
-
-              {/* Slider Dots */}
-              <div className="flex items-center gap-1.5 pt-4">
-                {heroMovies.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setHeroIdx(i)}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      i === heroIdx ? 'w-6 bg-red-600' : 'w-2 bg-white/30 hover:bg-white/50'
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
+          {/* Indicator Dots */}
+          <div className="absolute bottom-5 left-5 sm:left-8 z-20 flex items-center gap-1.5">
+            {heroMovies.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setHeroIdx(i)}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === heroIdx ? 'w-6 bg-red-600' : 'w-2 bg-white/30 hover:bg-white/50'
+                }`}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -251,3 +291,4 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
     </div>
   );
 }
+
