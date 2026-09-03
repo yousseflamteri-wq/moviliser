@@ -7,7 +7,6 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
   const carouselRef = useRef(null);
   const rowRefs = useRef({});
 
-  // Sync scroll position with dots
   const handleScroll = () => {
     if (!carouselRef.current) return;
     const width = carouselRef.current.offsetWidth;
@@ -18,7 +17,6 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
     }
   };
 
-  // Click dot to jump smoothly to that movie
   const scrollToIndex = (index) => {
     if (!carouselRef.current) return;
     carouselRef.current.scrollTo({
@@ -28,7 +26,6 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
     setHeroIdx(index);
   };
 
-  // Optional: Auto slide every 6 seconds
   useEffect(() => {
     if (heroMovies.length <= 1) return;
     const timer = setInterval(() => {
@@ -64,14 +61,13 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
   return (
     <div className="flex flex-col gap-8 pb-16 overflow-x-hidden pt-14 bg-[#09090b]">
 
-      {/* Modern Cineby Snap Hero */}
+      {/* Hero Carousel with Light, Natural Shadows */}
       {heroMovies.length > 0 && (
         <div className="relative w-full overflow-hidden">
-          {/* Scroll Snap Carousel Track */}
           <div
             ref={carouselRef}
             onScroll={handleScroll}
-            className="flex w-full h-[520px] sm:h-[600px] overflow-x-auto snap-x snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden"
+            className="flex w-full h-[500px] sm:h-[600px] overflow-x-auto snap-x snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {heroMovies.map((movie) => (
@@ -79,39 +75,38 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
                 key={movie.id}
                 className="relative w-full flex-[0_0_100%] snap-start snap-always h-full flex items-end overflow-hidden"
               >
-                {/* Backdrop Image */}
+                {/* Backdrop Image - Vivid & Visible */}
                 <img
                   src={movie.backdrop || movie.poster}
                   alt={movie.title}
-                  className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
+                  className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none brightness-95"
                 />
 
-                {/* Overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/75 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#09090b] via-[#09090b]/80 to-transparent sm:w-2/3" />
+                {/* Reduced Soft Shadow Overlays (Poster is no longer pitch dark) */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#09090b]/60 via-transparent to-transparent sm:w-1/2" />
 
                 {/* Content */}
-                <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 pb-12">
-                  <div className="max-w-xl flex flex-col items-start gap-3">
+                <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 pb-10">
+                  <div className="max-w-xl flex flex-col items-start gap-2.5">
                     <div className="flex items-center gap-2">
                       <span className="rounded bg-red-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
                         Featured
                       </span>
-                      <span className="flex items-center gap-1 rounded bg-black/50 px-2 py-0.5 text-[11px] font-semibold text-yellow-400 backdrop-blur-md border border-white/10">
+                      <span className="flex items-center gap-1 rounded bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-yellow-400 backdrop-blur-md border border-white/10">
                         ★ {movie.rating || '8.8'}
                       </span>
-                      <span className="text-xs text-zinc-400">{movie.year || '2024'}</span>
+                      <span className="text-xs text-zinc-300 drop-shadow">{movie.year || '2024'}</span>
                     </div>
 
-                    <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                    <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight drop-shadow-md">
                       {movie.title}
                     </h1>
 
-                    <p className="text-xs sm:text-sm text-zinc-300 line-clamp-2 max-w-lg leading-relaxed">
+                    <p className="text-xs sm:text-sm text-zinc-200 line-clamp-2 max-w-lg leading-relaxed drop-shadow">
                       {movie.overview || movie.synopsis || `Stream ${movie.title} in HD quality with adaptive fast edge routing.`}
                     </p>
 
-                    {/* CTA Buttons */}
                     <div className="flex items-center gap-3 pt-2">
                       <button
                         onClick={() => onSelect(movie)}
@@ -125,7 +120,7 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
 
                       <button
                         onClick={() => onToggleWatchlist(movie.id)}
-                        className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95"
+                        className="flex items-center gap-2 rounded-xl border border-white/20 bg-black/40 px-4 py-3 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-black/60 active:scale-95"
                       >
                         <svg
                           viewBox="0 0 24 24"
@@ -145,14 +140,13 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
             ))}
           </div>
 
-          {/* Clean Indicator Dots */}
           <div className="absolute bottom-4 left-5 sm:left-8 z-20 flex items-center gap-1.5">
             {heroMovies.map((_, i) => (
               <button
                 key={i}
                 onClick={() => scrollToIndex(i)}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === heroIdx ? 'w-6 bg-red-600' : 'w-2 bg-white/30 hover:bg-white/50'
+                  i === heroIdx ? 'w-6 bg-red-600' : 'w-2 bg-white/40 hover:bg-white/60'
                 }`}
               />
             ))}
@@ -160,7 +154,7 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
         </div>
       )}
 
-      {/* Genre Pills Bar */}
+      {/* Genre Pills */}
       <div className="mx-auto flex w-full max-w-7xl overflow-x-auto px-4 sm:px-8 [&::-webkit-scrollbar]:hidden">
         <div className="flex items-center gap-2 pb-1">
           {genresList.map((genre) => (
@@ -175,7 +169,7 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
         </div>
       </div>
 
-      {/* Media Rows */}
+      {/* Rows */}
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 sm:px-8">
         {Object.entries(categorized).map(([genre, rowMovies]) => (
           <div key={genre} className="group/row relative flex flex-col">
@@ -192,7 +186,6 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
               </button>
             </div>
 
-            {/* Row Navigation Arrows */}
             <button
               onClick={() => scrollRow(genre, 'left')}
               className="absolute left-0 top-1/2 z-20 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white backdrop-blur-md border border-white/10 opacity-0 transition group-hover/row:opacity-100 hover:bg-red-600 -ml-3"
@@ -210,7 +203,6 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
               </svg>
             </button>
 
-            {/* Poster Carousel */}
             <div
               ref={(el) => (rowRefs.current[genre] = el)}
               className="-mx-4 flex snap-x snap-mandatory overflow-x-auto px-4 pb-4 scroll-smooth [&::-webkit-scrollbar]:hidden"
@@ -238,12 +230,10 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
                           }`}
                         />
 
-                        {/* Top Rating Pill */}
                         <div className="absolute top-2 right-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-yellow-400 backdrop-blur-md border border-white/10">
                           ★ {movie.rating || '8.5'}
                         </div>
 
-                        {/* Bookmark Button */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -260,7 +250,6 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
                           </svg>
                         </button>
 
-                        {/* Hover Overlay with Center Play Circle */}
                         <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100">
                           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-600 text-white shadow-xl shadow-red-600/50 transform scale-75 group-hover:scale-100 transition-transform duration-300">
                             <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 ml-0.5">
@@ -269,7 +258,6 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
                           </div>
                         </div>
 
-                        {/* Bottom Gradient Title */}
                         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/80 to-transparent p-3 pt-8">
                           <h4 className="text-xs font-semibold leading-snug text-white line-clamp-1 group-hover:text-red-400 transition-colors">
                             {movie.title}
@@ -293,4 +281,3 @@ export default function MovieGrid({ movies = [], onSelect, onSeeAll, watchlist =
     </div>
   );
 }
-
